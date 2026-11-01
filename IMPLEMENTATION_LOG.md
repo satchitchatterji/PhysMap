@@ -178,3 +178,11 @@ not claimed as completed by automated tests or the synthetic-frame browser check
 - Verification after this metadata-only fix: run `npm test` and `npm run build`;
   interactive permission prompts still require the user's desktop session.
 - Intended commit: `Declare macOS microphone usage for audio capture`
+
+## Audio permission handler correction
+
+- Electron can report the initial media permission check as `unknown` before the
+  request includes its concrete audio/video types. The handler now allows that
+  check and continues to the existing media-type validation instead of rejecting
+  microphone capture before the OS prompt.
+- Intended commit: `Allow Electron unknown media checks for audio permission`

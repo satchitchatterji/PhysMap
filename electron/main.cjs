@@ -250,10 +250,12 @@ function createWindow() {
   const editorSession = mainWindow.webContents.session;
   editorSession.setPermissionCheckHandler((contents, permission, _origin, details) => (
     contents === mainWindow?.webContents && permission === 'media'
-      && ['audio', 'video'].includes(details.mediaType)
+      && ['audio', 'video', 'unknown'].includes(details.mediaType)
   ));
   editorSession.setPermissionRequestHandler(async (contents, permission, callback, details) => {
-    const mediaTypes = details.mediaTypes || (details.mediaType ? [details.mediaType] : []);
+    const mediaTypes = Array.isArray(details.mediaTypes) && details.mediaTypes.length
+      ? details.mediaTypes
+      : ['audio'];
     const allowedMedia = mediaTypes.length > 0 && mediaTypes.every((type) => ['audio', 'video'].includes(type));
     if (contents !== mainWindow?.webContents || permission !== 'media' || !allowedMedia) {
       callback(false);
