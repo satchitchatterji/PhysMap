@@ -168,3 +168,13 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   require interactive desktop verification on each target OS; no hardware capture
   check was claimed here.
 - Intended commit: `Add audio-reactive surface ripples and animation modulation`
+
+## Audio permission follow-up
+
+- Added the macOS `NSMicrophoneUsageDescription` application declaration. Without
+  it, Electron can reject microphone capture before macOS displays a permission
+  prompt. A packaged build or fresh Electron launch is required to pick up the
+  updated application metadata.
+- Verification after this metadata-only fix: run `npm test` and `npm run build`;
+  interactive permission prompts still require the user's desktop session.
+- Intended commit: `Declare macOS microphone usage for audio capture`
