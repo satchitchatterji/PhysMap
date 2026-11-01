@@ -83,7 +83,6 @@ export function serialize(app) {
     outlineSpeed: s.outlineSpeed,
     image: s.image || null,
     video: s.video || null,
-    youtube: s.youtube || null,
   }));
 
   const viewport = app.getViewport ? app.getViewport() : null;
@@ -103,7 +102,7 @@ export function serialize(app) {
 
 // Rebuild the world from a snapshot. Clears existing obstacles + circles first.
 // `app.addEmitter` is used so emitters get consistent ids/state.
-export function applyScene(data, app) {
+export function applyScene(data, app, onLegacyYoutube = null) {
   if (!data || !Array.isArray(data.obstacles)) {
     throw new Error('Invalid scene data');
   }
@@ -134,7 +133,17 @@ export function applyScene(data, app) {
   }
 
   if (app.setShapes) {
-    app.setShapes(data.shapes);
+    let migratedYoutube = false;
+    const shapes = (data.shapes || []).map((shape) => {
+      if (shape.fill !== 'youtube' && !shape.youtube) return shape;
+      migratedYoutube = true;
+      const normalized = { ...shape };
+      if (normalized.fill === 'youtube') normalized.fill = 'outline';
+      delete normalized.youtube;
+      return normalized;
+    });
+    app.setShapes(shapes);
+    if (migratedYoutube && typeof onLegacyYoutube === 'function') onLegacyYoutube();
   }
 
   if (typeof data.visualMode === 'string' && config.visualModes.includes(data.visualMode)) {
@@ -177,11 +186,11 @@ export function getLocalScene() {
 }
 
 // Returns true if a saved scene was found and applied.
-export function loadLocal(app) {
+export function loadLocal(app, onLegacyYoutube) {
   const data = getLocalScene();
   if (!data) return false;
   try {
-    applyScene(data, app);
+    applyScene(data, app, onLegacyYoutube);
     return true;
   } catch (err) {
     console.warn('PhysMap: failed to load saved scene —', err);
@@ -220,10 +229,10 @@ export function saveNamed(app, name) {
 }
 
 // Load a named scene into the app. Returns true if it existed.
-export function loadNamed(app, name) {
+export function loadNamed(app, name, onLegacyYoutube) {
   const all = listSaves();
   if (!all[name]) return false;
-  applyScene(all[name], app);
+  applyScene(all[name], app, onLegacyYoutube);
   return true;
 }
 
@@ -250,12 +259,12 @@ export function exportFile(app) {
 }
 
 // Read a File object (from an <input type="file">) and apply it.
-export function importFile(file, app) {
+export function importFile(file, app, onLegacyYoutube) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        applyScene(JSON.parse(reader.result), app);
+        applyScene(JSON.parse(reader.result), app, onLegacyYoutube);
         resolve();
       } catch (err) {
         reject(err);

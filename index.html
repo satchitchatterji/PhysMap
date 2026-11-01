@@ -110,9 +110,6 @@
         display: block;
         position: absolute;
         inset: 0;
-        /* Above the YouTube iframe layer (#yt-layer, z-index 1); the canvas
-           punches transparent holes over youtube-filled shapes so the warped
-           player behind shows through. */
         z-index: 2;
       }
 
@@ -3974,12 +3971,10 @@
             <div class="props-row media-actions">
               <button id="props-image-btn">Choose Image</button>
               <button id="props-video-btn">Choose Video</button>
-              <button id="props-youtube-btn">YouTube URL</button>
             </div>
             <div class="effect-grid">
               <button data-fill="image">Use Image</button>
               <button data-fill="video">Use Video</button>
-              <button data-fill="youtube">Use YouTube</button>
             </div>
           </div>
         </details>

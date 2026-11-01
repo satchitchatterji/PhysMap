@@ -6,7 +6,7 @@
 
 <p align="center"><b>A free desktop projection-mapping workspace for macOS, Windows, and Linux.</b></p>
 
-<p align="center">Map light onto anything. Draw a shape over a real object, drag the corners to fit, and project &mdash; with images, video, YouTube, animated surfaces and 2D physics, all in one focused window.</p>
+<p align="center">Map light onto anything. Draw a shape over a real object, drag the corners to fit, and project &mdash; with images, video, animated surfaces and 2D physics, all in one focused window.</p>
 
 <p align="center">
   <a href="https://github.com/mirauta-alexandru/PhysMap/releases"><b>Download for macOS / Windows / Linux &rarr;</b></a>
@@ -90,8 +90,7 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
   - Built-in animations: 3D cube / grid / orb, neon tunnel, starfield, helix, scan,
     equalizer, wave, radar, rings, kaleido, aurora, constellation, laser fan,
     topography, pixel rain and prism
-  - An **imported image**, a **local video file** (loops, muted), or a **YouTube
-    video** &mdash; all perspective-warped onto the shape
+  - An **imported image** or a **local video file** (loops, muted) &mdash; all perspective-warped onto the shape
 - **Cut (mask)** &mdash; punch a black hole over part of the projection to hide light
   spill or carve content to an exact shape.
 - **Curved lines** &mdash; with the Line tool, hover any segment and drag to bend it
@@ -117,7 +116,7 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
 3. **Fit it** &mdash; switch to Select (`V`) and drag the corner points until the
    shape sits exactly on the object. With a line, drag any segment to curve it.
 4. **Set its look** &mdash; in the inspector pick a fill (solid, glow, image, video,
-   YouTube, animation, cut mask...) and a color.
+   animation, cut mask...) and a color.
 5. **Align and play** &mdash; everything you do mirrors to the projector output in
    real time.
 

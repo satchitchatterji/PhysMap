@@ -99,7 +99,7 @@ export function makeShape(opts) {
       ? opts.curves.map((c) => (c ? [c[0], c[1]] : null))
       : [],
     role: opts.role || 'decor', // 'decor' | 'obstacle' | 'dynamic'
-    fill: opts.fill || 'outline', // 'outline'|'solid'|'glow'|'pulse'|'rainbow'|'image'|'video'|'youtube'|'anim'
+    fill: opts.fill || 'outline', // 'outline'|'solid'|'glow'|'pulse'|'rainbow'|'image'|'video'|'anim'
     anim: opts.anim || 'cube3d', // animation name when fill === 'anim'
     animSpeed: Math.max(0.25, Math.min(3, Number(opts.animSpeed) || 1)),
     animIntensity: Math.max(0.2, Math.min(1, Number(opts.animIntensity) || 1)),
@@ -112,7 +112,6 @@ export function makeShape(opts) {
     outlineSpeed: Math.max(0.25, Math.min(3, Number(opts.outlineSpeed) || 1)),
     image: opts.image || null, // dataURL when fill === 'image'
     video: opts.video || null, // dataURL when fill === 'video'
-    youtube: opts.youtube || null, // YouTube video id when fill === 'youtube'
     _img: null, // decoded HTMLImageElement cache
     _video: null, // HTMLVideoElement cache for the 'video' fill
     _animCanvas: null, // offscreen cache for animated fills
@@ -412,14 +411,6 @@ function drawOneShape(ctx, shape, now) {
       ctx.clip();
       ctx.drawImage(media, bb.minX, bb.minY, bb.w, bb.h);
     }
-  } else if (shape.fill === 'youtube') {
-    // The actual video is a warped <iframe> floated *behind* the canvas (see
-    // youtube.js). Here we punch a transparent hole in the opaque-black canvas
-    // exactly over the shape so the warped player shows through and lines up.
-    tracePathShape(ctx, shape, pts);
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = '#000';
-    ctx.fill();
   } else if (shape.fill === 'outline') {
     drawOutline(ctx, shape, pts, now, color, strokeWidth);
   } else {
@@ -450,9 +441,8 @@ function drawOneShape(ctx, shape, now) {
 }
 
 // A 'mask' (Cut) shape paints an opaque-black hole that hides everything behind
-// it — warped video, image fills, and even the YouTube iframe that shows
-// through the canvas. Masks are drawn LAST so they sit on top of every other
-// shape and of the youtube "holes". In edit mode they're semi-transparent with
+// it — warped video and image fills. Masks are drawn LAST so they sit on top of
+// every other shape. In edit mode they're semi-transparent with
 // a dashed magenta outline so you can still see/position them over the video.
 function drawMask(ctx, shape, editMode) {
   const pts = renderPoints(shape);
@@ -481,7 +471,7 @@ export function drawShapes(ctx, app, editMode, now) {
     if (shape.fill === 'mask') continue;
     drawOneShape(ctx, shape, now);
   }
-  // Mask pass: opaque-black cut-outs on top of everything (incl. youtube holes).
+  // Mask pass: opaque-black cut-outs on top of everything.
   for (const shape of app.shapes) {
     if (shape.visible === false) continue;
     if (shape.fill === 'mask') drawMask(ctx, shape, editMode);

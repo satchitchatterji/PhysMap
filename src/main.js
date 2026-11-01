@@ -62,7 +62,6 @@ import {
   bbox,
   centroid,
 } from './shapes.js';
-import { createYouTubeOverlay, parseYouTubeId } from './youtube.js';
 import { loadPreferences, savePreferences, snapPoint } from './preferences.js';
 
 // --- Canvas setup -----------------------------------------------------------
@@ -332,8 +331,6 @@ function wireProjectName() {
 const source = document.createElement('canvas');
 const sctx = source.getContext('2d');
 
-// Warped <iframe> overlay for YouTube-backed shapes (canvas can't draw YT).
-const youtubeOverlay = createYouTubeOverlay();
 
 // Hidden pool that keeps shape <video> elements decoding so their frames can be
 // drawn onto the canvas every render. (display:none would stop playback.)
@@ -739,7 +736,6 @@ function resize() {
   canvas.style.height = height + 'px';
   canvas.style.left = stageLeft + 'px';
   canvas.style.top = stageTop + 'px';
-  youtubeOverlay.setViewport(stageLeft, stageTop, width, height);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   // Source canvas mirrors the stage resolution; its context also works in CSS px.
@@ -1020,9 +1016,6 @@ function loop(now) {
     drawProjectionFrame(ctx, now);
   }
   renderOutputFrame(now);
-
-  // Keep the YouTube <iframe>s aligned/warped to their shapes every frame.
-  youtubeOverlay.sync(app.shapes);
 
   requestAnimationFrame(loop);
 }
@@ -1547,7 +1540,7 @@ function wireToolbar() {
     if (!fileInput.files.length) return;
     try {
       history?.checkpoint();
-      await importFile(fileInput.files[0], app);
+      await importFile(fileInput.files[0], app, notifyLegacyYoutube);
       setWorkspaceProjectName(fileInput.files[0].name.replace(/\.json$/i, '') || 'Imported Project');
       commitSceneChange();
       flash('Scene imported');
@@ -1736,7 +1729,7 @@ function continueCurrentProject() {
 }
 
 function openNamedFromHome(name) {
-  if (!loadNamed(app, name)) return;
+  if (!loadNamed(app, name, notifyLegacyYoutube)) return;
   app.mode = 'edit';
   resetHistory();
   setTool('select');
@@ -1954,6 +1947,10 @@ function flash(msg) {
   }, 1400);
 }
 
+function notifyLegacyYoutube() {
+  setTimeout(() => flash('Legacy YouTube fill changed to outline'), 0);
+}
+
 // ===========================================================================
 // Interactive tutorial
 // ===========================================================================
@@ -2149,29 +2146,9 @@ function applyFill(fill) {
     document.getElementById('props-video-file').click();
     return;
   }
-  if (fill === 'youtube' && !s.youtube) {
-    promptYouTube(s);
-    return;
-  }
   history.checkpoint();
   s.fill = fill;
   s.quickLook = '';
-  commitSceneChange();
-  updatePropsPanel();
-}
-
-// Ask for a YouTube link / id and attach it to the shape as a 'youtube' fill.
-function promptYouTube(shape) {
-  const url = window.prompt('Lipește un link YouTube (sau ID-ul videoclipului):', shape.youtube || '');
-  if (url == null) return;
-  const id = parseYouTubeId(url);
-  if (!id) {
-    flash('Link YouTube invalid');
-    return;
-  }
-  history.checkpoint();
-  shape.youtube = id;
-  shape.fill = 'youtube';
   commitSceneChange();
   updatePropsPanel();
 }
@@ -3051,12 +3028,6 @@ function wireProps() {
     vf.value = '';
   });
 
-  // YouTube link → warped <iframe> overlay mapped onto the shape.
-  document.getElementById('props-youtube-btn').addEventListener('click', () => {
-    const s = app.getSelectedShape();
-    if (s) promptYouTube(s);
-  });
-
   const updateSelectedPhysics = (mutate) => {
     const selected = getSelectedPhysicsObject();
     if (!selected) return;
@@ -3659,7 +3630,7 @@ desktopOutput?.onOutputClosed(() => {
 refreshDisplays();
 setTool('select');
 
-loadLocal(app);
+loadLocal(app, notifyLegacyYoutube);
 setWorkspaceProjectName(currentProjectName);
 renderHomeProjects();
 updateUI();
