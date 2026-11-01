@@ -83,6 +83,16 @@ export function serialize(app) {
     strokeWidth: s.strokeWidth,
     outlineFx: s.outlineFx,
     outlineSpeed: s.outlineSpeed,
+    audio: s.audio ? {
+      enabled: s.audio.enabled === true,
+      band: s.audio.band,
+      sensitivity: s.audio.sensitivity,
+      smoothing: s.audio.smoothing,
+      threshold: s.audio.threshold,
+      origin: Array.isArray(s.audio.origin) ? [...s.audio.origin] : [0.5, 0.5],
+      rippleRate: s.audio.rippleRate,
+      rippleDecay: s.audio.rippleDecay,
+    } : undefined,
     image: s.image || null,
     video: s.video || null,
   }));

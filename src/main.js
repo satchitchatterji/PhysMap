@@ -67,6 +67,7 @@ import {
   centroid,
 } from './shapes.js';
 import { loadPreferences, savePreferences, snapPoint } from './preferences.js';
+import { AudioReactiveController, audioSettings, normalizedPoint } from './audioReactive.js';
 
 // --- Canvas setup -----------------------------------------------------------
 const canvas = document.getElementById('stage');
@@ -75,6 +76,7 @@ const ctx = canvas.getContext('2d');
 // Desktop builds render a second, UI-free canvas and stream it into a dedicated
 // fullscreen BrowserWindow on the selected projector display.
 const desktopOutput = window.physmapDesktop || null;
+const audioReactive = new AudioReactiveController();
 const outputCanvas = document.createElement('canvas');
 const outputCtx = outputCanvas.getContext('2d');
 let outputWindow = null;
@@ -386,6 +388,7 @@ const app = {
   eyeStyle: config.eyeStyle,
   cameraCalibration: null,
   trackingTarget: null, // optional camera/car target: { x, y, vx, vy, lastSeen }
+  audioLevels: { bass: 0, mids: 0, treble: 0, overall: 0 },
 
   // Emitter helpers (used by tools.js and scene.js).
   addEmitter(
@@ -1048,6 +1051,7 @@ function loop(now) {
     updatePhysicsEffects(app.effects, allBodies(), now);
     step();
   }
+  app.audioLevels = audioReactive.sample();
 
   // Pure black stage every frame; the shapes carry their own mapping (their
   // corners are dragged onto the real object, and image fills warp into them).
@@ -1545,6 +1549,28 @@ function wireToolbar() {
     panel.classList.toggle('open');
     if (panel.classList.contains('open')) tutorialAction('output-setup');
     if (panel.classList.contains('open')) await refreshDisplays();
+  });
+  const audioPanel = document.getElementById('audio-panel');
+  const audioStatus = document.getElementById('audio-status');
+  const audioToggle = document.getElementById('audio-toggle');
+  document.getElementById('btn-audio').addEventListener('click', () => audioPanel.classList.toggle('open'));
+  document.getElementById('audio-close').addEventListener('click', () => audioPanel.classList.remove('open'));
+  audioToggle.addEventListener('click', async () => {
+    if (audioReactive.status === 'live' || audioReactive.status === 'starting') {
+      await audioReactive.stop();
+      audioStatus.textContent = 'Audio is off';
+      audioToggle.textContent = 'Start Audio';
+      return;
+    }
+    try {
+      audioStatus.textContent = 'Requesting audio permission...';
+      await audioReactive.start(document.getElementById('audio-source').value);
+      audioStatus.textContent = 'Audio live';
+      audioToggle.textContent = 'Stop Audio';
+    } catch (error) {
+      audioStatus.textContent = audioReactive.error || error?.message || 'Audio unavailable';
+      audioToggle.textContent = 'Start Audio';
+    }
   });
   document.getElementById('output-close').addEventListener('click', () => {
     document.getElementById('output-panel').classList.remove('open');
@@ -2280,6 +2306,42 @@ function applyAnimIntensity(value) {
   updateAnimationControls(s);
 }
 
+function applyAudioSetting(key, value) {
+  const shape = app.getSelectedShape();
+  if (!shape) return;
+  const current = audioSettings(shape.audio);
+  if (key === 'enabled') current.enabled = Boolean(value);
+  else if (key === 'band') current.band = value;
+  else if (key === 'origin') current.origin = [Math.max(0, Math.min(1, value[0])), Math.max(0, Math.min(1, value[1]))];
+  else current[key] = Number(value);
+  shape.audio = audioSettings(current);
+  saveCurrentProject();
+  updateAudioControls(shape);
+}
+
+function updateAudioControls(shape) {
+  const settings = audioSettings(shape?.audio);
+  const toggle = document.getElementById('props-audio-enabled');
+  if (toggle) {
+    toggle.classList.toggle('active', settings.enabled);
+    toggle.textContent = settings.enabled ? 'Audio Reactive On' : 'Audio Reactive Off';
+  }
+  const band = document.getElementById('props-audio-band');
+  if (band) band.value = settings.band;
+  for (const [id, key, format] of [
+    ['props-audio-sensitivity', 'sensitivity', (v) => `${Number(v).toFixed(1)}X`],
+    ['props-audio-smoothing', 'smoothing', (v) => `${Math.round(Number(v) * 100)}%`],
+    ['props-audio-threshold', 'threshold', (v) => `${Math.round(Number(v) * 100)}%`],
+    ['props-ripple-rate', 'rippleRate', (v) => `${Number(v).toFixed(2)}X`],
+    ['props-ripple-decay', 'rippleDecay', (v) => `${Math.round(Number(v) * 100)}%`],
+  ]) {
+    const input = document.getElementById(id);
+    const output = document.querySelector(`[data-audio-output="${id}"]`);
+    if (input) input.value = String(settings[key]);
+    if (output) output.textContent = format(settings[key]);
+  }
+}
+
 function updateStrokeWidthControl(shape) {
   const slider = document.getElementById('props-stroke-width');
   const output = document.getElementById('props-stroke-value');
@@ -2890,6 +2952,7 @@ function updatePropsPanel() {
   updateStrokeWidthControl(s);
   updateOutlineControls(s);
   updateAnimationControls(s);
+  updateAudioControls(s);
 
   // Path controls reflect the current open/closed state.
   const closeBtn = document.getElementById('props-close-toggle');
@@ -3058,6 +3121,32 @@ function wireProps() {
   };
   wireAnimationRange('props-anim-speed', applyAnimSpeed);
   wireAnimationRange('props-anim-intensity', applyAnimIntensity);
+
+  document.getElementById('props-audio-enabled').addEventListener('click', () => {
+    history.checkpoint();
+    applyAudioSetting('enabled', !audioSettings(app.getSelectedShape()?.audio).enabled);
+    commitSceneChange();
+  });
+  document.getElementById('props-audio-band').addEventListener('change', (event) => {
+    history.checkpoint();
+    applyAudioSetting('band', event.target.value);
+    commitSceneChange();
+  });
+  for (const [id, key] of [
+    ['props-audio-sensitivity', 'sensitivity'],
+    ['props-audio-smoothing', 'smoothing'],
+    ['props-audio-threshold', 'threshold'],
+    ['props-ripple-rate', 'rippleRate'],
+    ['props-ripple-decay', 'rippleDecay'],
+  ]) {
+    const input = document.getElementById(id);
+    input.addEventListener('input', (event) => {
+      const output = document.querySelector(`[data-audio-output="${id}"]`);
+      if (output) output.textContent = event.target.value;
+      applyAudioSetting(key, event.target.value);
+    });
+    input.addEventListener('change', commitSceneChange);
+  }
 
   document.getElementById('props-close-toggle').addEventListener('click', toggleClosed);
   document.getElementById('props-straighten').addEventListener('click', straightenSelected);
@@ -3736,6 +3825,35 @@ initShapeInput(canvas, app, {
   onContextMenu: ({ shape, event }) => openObjectContextMenu('shape', shape, event),
   transformPoint: (point) => snapPoint(point, preferences),
 });
+let audioOriginDrag = null;
+canvas.addEventListener('pointerdown', (event) => {
+  const shape = app.getSelectedShape();
+  if (app.mode !== 'edit' || !shape?.audio?.enabled || shape.closed === false || shape.locked) return;
+  const rect = canvas.getBoundingClientRect();
+  const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  const origin = normalizedPoint(shape.audio.origin, shape.points);
+  if (Math.hypot(point.x - origin.x, point.y - origin.y) > 18) return;
+  history.checkpoint();
+  audioOriginDrag = { shape, rect };
+  canvas.setPointerCapture?.(event.pointerId);
+  event.stopImmediatePropagation();
+}, true);
+canvas.addEventListener('pointermove', (event) => {
+  if (!audioOriginDrag) return;
+  const { shape, rect } = audioOriginDrag;
+  const bb = bbox(shape.points);
+  const x = Math.max(0, Math.min(1, ((event.clientX - rect.left) - bb.minX) / Math.max(1, bb.maxX - bb.minX)));
+  const y = Math.max(0, Math.min(1, ((event.clientY - rect.top) - bb.minY) / Math.max(1, bb.maxY - bb.minY)));
+  shape.audio = audioSettings({ ...shape.audio, origin: [x, y] });
+  updateAudioControls(shape);
+  event.stopImmediatePropagation();
+}, true);
+canvas.addEventListener('pointerup', (event) => {
+  if (!audioOriginDrag) return;
+  audioOriginDrag = null;
+  commitSceneChange();
+  event.stopImmediatePropagation();
+}, true);
 wireToolbar();
 wireProps();
 wireShapeContextMenu();

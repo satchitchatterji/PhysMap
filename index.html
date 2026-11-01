@@ -2013,6 +2013,24 @@
         display: grid;
         animation: modal-arrive 0.2s ease both;
       }
+      #audio-panel {
+        position: fixed;
+        z-index: 26;
+        top: 80px;
+        left: 50%;
+        width: min(440px, calc(100vw - 32px));
+        display: none;
+        gap: 11px;
+        padding: 16px;
+        transform: translateX(-50%);
+        background: rgba(13, 19, 22, 0.98);
+        border: 1px solid var(--teal);
+        border-radius: 10px;
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.62);
+        backdrop-filter: blur(24px);
+      }
+      #audio-panel.open { display: grid; animation: modal-arrive 0.2s ease both; }
+      #audio-panel select { width: 100%; }
       .output-panel-head {
         display: flex;
         justify-content: space-between;
@@ -3532,6 +3550,7 @@
         </div>
         <button id="btn-project">OUTPUT (P)</button>
         <button id="btn-output-settings" title="Choose the projector display">SETUP</button>
+        <button id="btn-audio" title="Configure audio-reactive visuals">AUDIO</button>
       </div>
 
       <nav class="workspace-actions" aria-label="Workspace actions">
@@ -3571,6 +3590,22 @@
         <input id="import-file" type="file" accept="application/json,.json" hidden />
       </nav>
     </header>
+
+    <section id="audio-panel" aria-label="Audio reactive settings">
+      <div class="output-panel-head">
+        <div><span class="output-eyebrow">Audio Reactive</span><strong>Drive surfaces from sound</strong></div>
+        <button id="audio-close" title="Close audio settings">X</button>
+      </div>
+      <label for="audio-source">Input</label>
+      <select id="audio-source">
+        <option value="microphone">Microphone</option>
+        <option value="system">System audio</option>
+        <option value="mix">Microphone + system</option>
+      </select>
+      <div class="output-safety"><button id="audio-toggle">Start Audio</button></div>
+      <div id="audio-status" role="status">Audio is off</div>
+      <div class="output-note">System audio availability depends on the operating system and the selected share source.</div>
+    </section>
 
     <section id="output-panel" aria-label="Projection output settings">
       <div class="output-panel-head">
@@ -3973,6 +4008,23 @@
               <input type="range" id="props-anim-intensity" min="0.2" max="1" step="0.1" value="1" />
               <output id="props-anim-intensity-value" class="range-value" for="props-anim-intensity">100%</output>
             </div>
+            <div class="props-label">Audio Reactive</div>
+            <button id="props-audio-enabled">Audio Reactive Off</button>
+            <div class="props-row">
+              <select id="props-audio-band" aria-label="Audio frequency band">
+                <option value="overall">Overall energy</option>
+                <option value="bass">Bass</option>
+                <option value="mids">Mids</option>
+                <option value="treble">Treble</option>
+              </select>
+            </div>
+            <div class="props-row range-row"><input type="range" id="props-audio-sensitivity" min="0.1" max="3" step="0.1" value="1" /><output class="range-value" data-audio-output="props-audio-sensitivity">1.0X</output></div>
+            <div class="props-row range-row"><input type="range" id="props-audio-smoothing" min="0" max="0.95" step="0.05" value="0.35" /><output class="range-value" data-audio-output="props-audio-smoothing">35%</output></div>
+            <div class="props-row range-row"><input type="range" id="props-audio-threshold" min="0" max="0.8" step="0.05" value="0.08" /><output class="range-value" data-audio-output="props-audio-threshold">8%</output></div>
+            <div class="props-label">Ripple</div>
+            <div class="props-row range-row"><input type="range" id="props-ripple-rate" min="0.25" max="3" step="0.25" value="1" /><output class="range-value" data-audio-output="props-ripple-rate">1.00X</output></div>
+            <div class="props-row range-row"><input type="range" id="props-ripple-decay" min="0.2" max="0.98" step="0.02" value="0.72" /><output class="range-value" data-audio-output="props-ripple-decay">72%</output></div>
+            <small class="props-help">Ripple origin defaults to the surface center. Drag the green origin marker on the stage.</small>
           </div>
         </details>
 

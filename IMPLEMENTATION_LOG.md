@@ -148,3 +148,23 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   starts the Electron app. The earlier runtime-download blocker is resolved;
   the remaining physical camera/projector/media checks still apply.
 - Intended commit: `Record verified Electron runtime installation`
+
+## Step 7: Audio-reactive mapped surfaces
+
+- Added a dependency-free Web Audio controller with microphone, system-audio, and
+  mixed capture modes, analyser band levels, smoothing, thresholds, sensitivity,
+  and cleanup of all acquired tracks. Temporary system-capture video tracks are
+  stopped after the audio track is obtained.
+- Shapes now persist opt-in audio settings and a normalized ripple origin. Enabled
+  surfaces modulate animated-fill speed/brightness and draw clipped audio ripples
+  from the origin; existing scenes remain disabled by default. The editor exposes
+  AUDIO capture controls and per-shape Motion controls, including a draggable origin.
+- Electron media permission handling now permits editor audio while retaining
+  camera permission checks for video capture. System-audio availability remains
+  platform/share-source dependent.
+- Verification: `npm test` passed 30 tests; `npm run build` passed with Vite.
+  Added signal, normalization, persistence, and clipping regression tests.
+- Limitations: microphone/system permission prompts and real system-audio mixing
+  require interactive desktop verification on each target OS; no hardware capture
+  check was claimed here.
+- Intended commit: `Add audio-reactive surface ripples and animation modulation`

@@ -23,6 +23,7 @@ import { warpImageToQuad } from './mapping.js';
 import { renderAnimation } from './animations.js';
 import { splitPathEdge } from './pathEditing.js';
 import { clampOpacity } from './layers.js';
+import { audioSettings, normalizeSignal, normalizedPoint, ripplePhase } from './audioReactive.js';
 
 const { Bodies, Composite, Vertices } = Matter;
 const TAU = Math.PI * 2;
@@ -115,6 +116,7 @@ export function makeShape(opts) {
       ? opts.outlineFx
       : 'snake',
     outlineSpeed: Math.max(0.25, Math.min(3, Number(opts.outlineSpeed) || 1)),
+    audio: audioSettings(opts.audio),
     image: opts.image || null, // dataURL when fill === 'image'
     video: opts.video || null, // persisted video reference when fill === 'video'
     _img: null, // decoded HTMLImageElement cache
@@ -369,7 +371,35 @@ function drawOutline(ctx, shape, pts, now, color, strokeWidth) {
   ctx.lineDashOffset = 0;
 }
 
-function drawOneShape(ctx, shape, now) {
+function drawReactiveRipples(ctx, shape, pts, now, audioLevels = null) {
+  const settings = audioSettings(shape.audio);
+  if (!settings.enabled || !audioLevels || shape.closed === false) return;
+  const signal = normalizeSignal(audioLevels[settings.band] || 0, settings);
+  if (signal <= 0.001) return;
+  const origin = normalizedPoint(settings.origin, pts);
+  const bb = bbox(pts);
+  const maxRadius = Math.max(bb.w, bb.h) * 0.78;
+  const phase = ripplePhase(signal, now, settings.rippleRate);
+  ctx.save();
+  tracePathShape(ctx, shape, pts);
+  ctx.clip();
+  ctx.strokeStyle = effectiveColor(shape, now);
+  ctx.shadowColor = ctx.strokeStyle;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(1.2, (shape.strokeWidth || 3) * (0.7 + signal * 0.9));
+  for (let i = 0; i < 4; i++) {
+    const progress = ((phase / (Math.PI * 2)) + i * 0.25) % 1;
+    const radius = Math.max(2, progress * maxRadius);
+    ctx.globalAlpha = signal * (1 - progress) * (1 - settings.rippleDecay * 0.45) * 0.7;
+    ctx.shadowBlur = config.glow * (0.8 + signal * 1.8);
+    ctx.beginPath();
+    ctx.ellipse(origin.x, origin.y, radius, radius * (bb.h / Math.max(1, bb.w)), 0, 0, TAU);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawOneShape(ctx, shape, now, audioLevels) {
   const pts = renderPoints(shape);
   if (!pts || pts.length < 2) return;
   const color = effectiveColor(shape, now);
@@ -395,8 +425,20 @@ function drawOneShape(ctx, shape, now) {
       shape._animCanvas.width = W;
       shape._animCanvas.height = H;
     }
-    renderAnimation(shape._animCtx, shape.anim, W, H, now * (shape.animSpeed || 1), color);
-    ctx.globalAlpha = shape.animIntensity || 1;
+    const settings = audioSettings(shape.audio);
+    const signal = settings.enabled && audioLevels
+      ? normalizeSignal(audioLevels[settings.band] || 0, settings)
+      : 0;
+    renderAnimation(
+      shape._animCtx,
+      shape.anim,
+      W,
+      H,
+      now * (shape.animSpeed || 1) * (1 + signal * 0.45),
+      color,
+      signal,
+    );
+    ctx.globalAlpha = Math.min(1, (shape.animIntensity || 1) * (1 + signal * 0.25));
     if (pts.length === 4) {
       warpImageToQuad(ctx, shape._animCanvas, pts);
     } else {
@@ -442,6 +484,7 @@ function drawOneShape(ctx, shape, now) {
       ctx.stroke();
     }
   }
+  drawReactiveRipples(ctx, shape, pts, now, audioLevels);
   ctx.restore();
 }
 
@@ -526,7 +569,7 @@ export function drawShapes(ctx, app, editMode, now) {
   for (const shape of app.shapes) {
     if (shape.visible === false) continue;
     if (shape.fill === 'mask') continue;
-    drawShapeWithOpacity(ctx, shape, (surfaceCtx) => drawOneShape(surfaceCtx, shape, now));
+    drawShapeWithOpacity(ctx, shape, (surfaceCtx) => drawOneShape(surfaceCtx, shape, now, app.audioLevels));
   }
   // Mask pass: opaque-black cut-outs on top of everything.
   for (const shape of app.shapes) {
@@ -589,6 +632,25 @@ export function drawShapes(ctx, app, editMode, now) {
       ctx.fillText('LOCK', center.x, center.y + 1);
     }
     ctx.restore();
+
+    if (sel.audio?.enabled && sel.closed !== false) {
+      const origin = normalizedPoint(sel.audio.origin, pts);
+      ctx.save();
+      ctx.strokeStyle = '#7CFF6B';
+      ctx.fillStyle = 'rgba(124,255,107,0.28)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(origin.x, origin.y, 8, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(origin.x - 12, origin.y);
+      ctx.lineTo(origin.x + 12, origin.y);
+      ctx.moveTo(origin.x, origin.y - 12);
+      ctx.lineTo(origin.x, origin.y + 12);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   // Live preview for square/triangle drag.

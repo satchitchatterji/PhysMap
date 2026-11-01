@@ -249,16 +249,25 @@ function createWindow() {
 
   const editorSession = mainWindow.webContents.session;
   editorSession.setPermissionCheckHandler((contents, permission, _origin, details) => (
-    contents === mainWindow?.webContents && permission === 'media' && details.mediaType === 'video'
+    contents === mainWindow?.webContents && permission === 'media'
+      && ['audio', 'video'].includes(details.mediaType)
   ));
   editorSession.setPermissionRequestHandler(async (contents, permission, callback, details) => {
-    const videoOnly = details.mediaTypes?.length === 1 && details.mediaTypes[0] === 'video';
-    if (contents !== mainWindow?.webContents || permission !== 'media' || !videoOnly) {
+    const mediaTypes = details.mediaTypes || (details.mediaType ? [details.mediaType] : []);
+    const allowedMedia = mediaTypes.length > 0 && mediaTypes.every((type) => ['audio', 'video'].includes(type));
+    if (contents !== mainWindow?.webContents || permission !== 'media' || !allowedMedia) {
       callback(false);
       return;
     }
     try {
-      callback(process.platform !== 'darwin' || await systemPreferences.askForMediaAccess('camera'));
+      const needsCamera = mediaTypes.includes('video');
+      const cameraAllowed = !needsCamera
+        || process.platform !== 'darwin'
+        || await systemPreferences.askForMediaAccess('camera');
+      const microphoneAllowed = !mediaTypes.includes('audio')
+        || process.platform !== 'darwin'
+        || await systemPreferences.askForMediaAccess('microphone');
+      callback(cameraAllowed && microphoneAllowed);
     } catch { callback(false); }
   });
   mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));

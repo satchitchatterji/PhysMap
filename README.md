@@ -98,6 +98,10 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
 - **Reactive physics** &mdash; emit configurable orb, cube or shard bursts with
   adjustable rate, power, count and spread. Add gravity, repulsion, vortices,
   portals, color gates and boost gates; gates can target one particle type.
+- **Audio-reactive surfaces** &mdash; start microphone, system-audio, or mixed input,
+  then enable per-surface bass, mids, treble, or overall-energy response. Existing
+  animations brighten and accelerate while clipped ripples radiate from a draggable
+  point on the surface.
 - **Project hub** &mdash; animated startup, autosaved current project, and a library
   of named projects you can reopen any time.
 - **Undo / Redo** with a deep history, and **Export / Import** scenes as `.json`.
@@ -138,6 +142,11 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
 - **Layers:** use Properties or Layers to move a surface forward/backward or to
   the front/back, set opacity, hide, lock, or duplicate it. Cut masks remain above
   ordinary surfaces; physics keeps its existing rendering order.
+- **Audio:** open AUDIO, choose an input, and start capture. Select a surface, enable
+  Audio Reactive in Motion, choose a band, and tune sensitivity, smoothing, threshold,
+  ripple rate, and decay. Drag the green origin marker in the editor to reposition
+  the ripple source. System audio depends on OS capture support and the selected share
+  source; denied or unavailable capture leaves the scene rendering normally.
 
 Segmentation downloads its model on first use, then reuses the browser cache.
 Frames stay on the device. Clearing/evicting that cache requires another download.

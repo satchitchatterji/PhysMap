@@ -816,7 +816,7 @@ function drawFocusRings(ctx, w, h, t, color) {
 }
 
 // Render the named animation into a (0,0,w,h) box on the given context.
-export function renderAnimation(ctx, name, w, h, now, color) {
+export function renderAnimation(ctx, name, w, h, now, color, signal = 0) {
   ctx.save();
   ctx.clearRect(0, 0, w, h);
   ctx.lineCap = 'round';
@@ -825,6 +825,7 @@ export function renderAnimation(ctx, name, w, h, now, color) {
   ctx.fillStyle = color;
   ctx.shadowColor = color;
   ctx.shadowBlur = Math.min(w, h) * 0.05;
+  ctx.globalAlpha = 0.78 + Math.max(0, Math.min(1, signal)) * 0.22;
   const t = now * 0.001;
 
   switch (name) {

@@ -54,3 +54,18 @@ test('layer order and zero opacity survive scene round-trip', () => {
   assert.deepEqual(app.shapes.map(shape => shape.name), ['Back', 'Front']);
   assert.deepEqual(app.shapes.map(shape => shape.opacity), [0, 0.4]);
 });
+
+test('audio-reactive shape settings survive scene serialization', () => {
+  const app = fixture();
+  app.shapes.push(makeShape({
+    points: [[0, 0], [100, 0], [100, 100]],
+    audio: { enabled: true, band: 'bass', sensitivity: 1.8, origin: [0.2, 0.8] },
+  }));
+  const saved = serialize(app);
+  assert.equal(saved.shapes[0].audio.enabled, true);
+  assert.equal(saved.shapes[0].audio.band, 'bass');
+  assert.deepEqual(saved.shapes[0].audio.origin, [0.2, 0.8]);
+  applyScene({ ...saved, shapes: [{ points: [[0, 0], [10, 0], [10, 10]] }] }, app);
+  assert.equal(app.shapes[0].audio.enabled, false);
+  assert.deepEqual(app.shapes[0].audio.origin, [0.5, 0.5]);
+});
