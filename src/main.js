@@ -17,6 +17,7 @@
 
 import { config } from './config.js';
 import { createCameraSetup } from './camera.js';
+import { projectPoint } from './geometry.js';
 import { browserVideo, mountVideo, disposeVideo } from './media.js';
 import {
   step,
@@ -3628,12 +3629,39 @@ const cameraSetup = createCameraSetup({
   onFrame: frame => openCameraMask(frame),
 });
 
-function openCameraMask() {
-  flash('Camera calibrated. Mask generation is being integrated.');
+let maskEditor = null;
+async function openCameraMask(frame) {
+  cameraSetup.close();
+  try {
+    const { createMaskEditor } = await import('./segmentation.js');
+    maskEditor?.close();
+    maskEditor = createMaskEditor({
+      onError: error => flash(error.message),
+      onAccept: cameraPoints => {
+        try {
+          const points = cameraPoints.map(([x,y]) => {
+            const [u,v] = projectPoint(frame.calibration.matrix, [x / frame.width, y / frame.height]);
+            return [u * width, v * height];
+          });
+          history.checkpoint();
+          const shape = app.addShape(makeShape({
+            type: 'line', closed: true, points, fill: 'solid',
+            name: numberedName('Camera Surface', app.shapes),
+          }));
+          app.selectedShapeId = shape.id;
+          app.selectedPhysics = null;
+          enterEdit();
+          setTool('select');
+          commitSceneChange();
+        } catch (error) { flash(error.message); }
+      },
+    });
+    maskEditor.open(frame);
+  } catch (error) { flash(error.message); }
 }
 
 document.getElementById('btn-camera').addEventListener('click', () => cameraSetup.open());
-window.addEventListener('beforeunload', () => cameraSetup.close());
+window.addEventListener('beforeunload', () => { cameraSetup.close(); maskEditor?.close(); });
 
 // ===========================================================================
 // Init

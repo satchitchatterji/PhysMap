@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>PhysMap mask smoke test</title>
+<style>body { background:#171a20;color:white;font:16px system-ui;padding:24px }button{padding:12px}</style>
+<h1>Segmentation smoke test</h1>
+<p>Uses a generated image. Open the editor, click the orange rectangle, refine, then accept.</p>
+<button id="open">Open synthetic frame</button><p id="result" role="status"></p>
+<script type="module">
+import { createMaskEditor } from '../src/segmentation.js';
+const canvas = document.createElement('canvas');
+canvas.width = 320; canvas.height = 240;
+const ctx = canvas.getContext('2d');
+ctx.fillStyle = '#c6d6e2'; ctx.fillRect(0, 0, 320, 240);
+ctx.fillStyle = '#e45622'; ctx.fillRect(90, 45, 140, 150);
+const result = document.getElementById('result');
+const editor = createMaskEditor({
+  onAccept: points => { result.textContent = `Accepted ${points.length} editable vertices.`; },
+  onError: error => { result.textContent = error.message; },
+});
+document.getElementById('open').onclick = () => editor.open({
+  imageData: ctx.getImageData(0, 0, 320, 240), width: 320, height: 240,
+});
+</script></html>

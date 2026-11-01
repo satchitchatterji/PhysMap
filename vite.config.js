@@ -5,4 +5,5 @@ import { defineConfig } from 'vite';
 // served from any sub-path (handy when deploying to GitHub Pages, etc).
 export default defineConfig({
   base: './',
+  worker: { format: 'es' },
 });

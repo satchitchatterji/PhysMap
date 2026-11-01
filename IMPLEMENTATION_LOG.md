@@ -4,7 +4,7 @@
 - [x] Disk-stream videos
 - [x] Midpoint insertion
 - [x] Camera alignment
-- [ ] SlimSAM masks
+- [x] SlimSAM masks
 - [ ] Ordered layers
 
 ## Step 1: Youtube removal
@@ -62,3 +62,21 @@
 - Limitations: physical camera/projector alignment and packaged macOS permission
   prompts require hardware verification. One plane is supported per scene.
 - Intended commit: `Add camera capture and persistent four-point calibration`
+
+## Step 5: SlimSAM masks
+
+- Lazy-loaded Transformers.js 3.8.1 and quantized SlimSAM run in a worker. Runtime
+  WASM assets are bundled; model weights download once into browser cache. The
+  library is a dev dependency so its Node/native packages are excluded from installers.
+- Foreground/background prompts reuse frame embeddings and preprocessing sizes.
+  Highest-score previews become simplified outer contours of the clicked component;
+  accepting maps vertices into a normal editable line surface in one undo action.
+- Reset/retry/close invalidate stale results. Camera capture stops before mask editing;
+  worker termination and buffer cleanup release transient inference state.
+- Verification: production build passes including local WASM assets; contour tests
+  pass. Browser synthetic-frame check completed model loading, foreground and
+  background inference, and acceptance of a 13-vertex outline. A repeatable manual
+  check lives at `/tests/segmentation-smoke.html` under the dev server.
+- Limitations: model cache eviction requires a fresh download; offline packaged
+  behavior and mask quality on real objects need field verification. Holes are omitted.
+- Intended commit: `Generate editable camera masks with on-demand SlimSAM`

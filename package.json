@@ -24,13 +24,15 @@
     "dist": "npm run build && npm run icons && electron-builder",
     "dist:mac": "npm run build && npm run icons && electron-builder --mac dmg --x64 --arm64",
     "dist:win": "npm run build && npm run icons && electron-builder --win nsis --x64",
-    "dist:linux": "npm run build && npm run icons && electron-builder --linux AppImage deb --x64"
+    "dist:linux": "npm run build && npm run icons && electron-builder --linux AppImage deb --x64",
+    "test": "node --test tests/*.test.js tests/*.test.cjs"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
     "matter-js": "^0.20.0"
   },
   "devDependencies": {
+    "@huggingface/transformers": "3.8.1",
     "electron": "^41.7.1",
     "electron-builder": "^26.15.2",
     "png-to-ico": "^3.0.1",
