@@ -1040,6 +1040,17 @@ function renderOutputFrame(now) {
   drawProjectionFrame(outputCtx, now);
 }
 
+function updateAudioMeter(levels) {
+  const fill = document.getElementById('audio-level-fill');
+  const value = document.getElementById('audio-level-value');
+  const meter = document.getElementById('audio-level-meter');
+  if (!fill || !value || !meter) return;
+  const percent = Math.round(Math.max(0, Math.min(1, levels?.overall || 0)) * 100);
+  fill.style.width = `${percent}%`;
+  value.textContent = `${percent}%`;
+  meter.setAttribute('aria-valuenow', String(percent));
+}
+
 // --- Render loop ------------------------------------------------------------
 let last = performance.now();
 function loop(now) {
@@ -1052,6 +1063,7 @@ function loop(now) {
     step();
   }
   app.audioLevels = audioReactive.sample();
+  updateAudioMeter(app.audioLevels);
 
   // Pure black stage every frame; the shapes carry their own mapping (their
   // corners are dragged onto the real object, and image fills warp into them).

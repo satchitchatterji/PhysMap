@@ -186,3 +186,12 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   check and continues to the existing media-type validation instead of rejecting
   microphone capture before the OS prompt.
 - Intended commit: `Allow Electron unknown media checks for audio permission`
+
+## Audio control clarity and input meter
+
+- Added plain-language descriptions beside every audio-reactive slider and a live
+  Input level meter in the AUDIO panel. The meter follows the analyser's overall
+  level, resets when capture stops, and exposes an accessible progress value.
+- Documented the slider meanings in README. Verification: `npm test`, `npm run
+  build`, and whitespace checks passed.
+- Intended commit: `Clarify audio controls and add input level meter`

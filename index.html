@@ -2036,6 +2036,33 @@
         font-family: 'Silkscreen', -apple-system, BlinkMacSystemFont, sans-serif;
       }
       #audio-panel select { width: 100%; }
+      .audio-meter-label {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+        color: var(--muted);
+        font: 11px 'Silkscreen', monospace;
+      }
+      #audio-level-meter {
+        height: 10px;
+        overflow: hidden;
+        margin: 6px 0 3px;
+        background: rgba(60, 110, 136, 0.22);
+        border: 1px solid var(--teal-dark);
+        border-radius: 5px;
+      }
+      #audio-level-fill {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, var(--mint-dim), var(--mint-bright));
+        box-shadow: 0 0 12px rgba(180, 232, 156, 0.8);
+        transition: width 80ms linear;
+      }
+      .props-help {
+        color: var(--muted);
+        font: 10px 'Silkscreen', monospace;
+        font-weight: normal;
+      }
       .output-panel-head {
         display: flex;
         justify-content: space-between;
@@ -3609,6 +3636,8 @@
       </select>
       <div class="output-safety"><button id="audio-toggle">Start Audio</button></div>
       <div id="audio-status" role="status">Audio is off</div>
+      <div class="audio-meter-label"><span>Input level</span><output id="audio-level-value">0%</output></div>
+      <div id="audio-level-meter" role="progressbar" aria-label="Audio input level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="audio-level-fill"></div></div>
       <div class="output-note">System audio availability depends on the operating system and the selected share source.</div>
     </section>
 
@@ -4023,11 +4052,16 @@
                 <option value="treble">Treble</option>
               </select>
             </div>
+            <div class="props-label">Sensitivity <span class="props-help">How strongly sound drives the effect</span></div>
             <div class="props-row range-row"><input type="range" id="props-audio-sensitivity" min="0.1" max="3" step="0.1" value="1" /><output class="range-value" data-audio-output="props-audio-sensitivity">1.0X</output></div>
+            <div class="props-label">Smoothing <span class="props-help">Reduces jitter; higher is calmer</span></div>
             <div class="props-row range-row"><input type="range" id="props-audio-smoothing" min="0" max="0.95" step="0.05" value="0.35" /><output class="range-value" data-audio-output="props-audio-smoothing">35%</output></div>
+            <div class="props-label">Threshold <span class="props-help">Ignores sound below this level</span></div>
             <div class="props-row range-row"><input type="range" id="props-audio-threshold" min="0" max="0.8" step="0.05" value="0.08" /><output class="range-value" data-audio-output="props-audio-threshold">8%</output></div>
             <div class="props-label">Ripple</div>
+            <div class="props-label">Rate <span class="props-help">How quickly rings expand</span></div>
             <div class="props-row range-row"><input type="range" id="props-ripple-rate" min="0.25" max="3" step="0.25" value="1" /><output class="range-value" data-audio-output="props-ripple-rate">1.00X</output></div>
+            <div class="props-label">Decay <span class="props-help">How quickly rings fade</span></div>
             <div class="props-row range-row"><input type="range" id="props-ripple-decay" min="0.2" max="0.98" step="0.02" value="0.72" /><output class="range-value" data-audio-output="props-ripple-decay">72%</output></div>
             <small class="props-help">Ripple origin defaults to the surface center. Drag the green origin marker on the stage.</small>
           </div>

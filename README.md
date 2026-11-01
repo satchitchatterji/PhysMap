@@ -145,7 +145,10 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
 - **Audio:** open AUDIO, choose an input, and start capture. Select a surface, enable
   Audio Reactive in Motion, choose a band, and tune sensitivity, smoothing, threshold,
   ripple rate, and decay. Drag the green origin marker in the editor to reposition
-  the ripple source. System audio depends on OS capture support and the selected share
+  the ripple source. The AUDIO panel's Input level bar confirms that sound is reaching
+  the analyser. Sensitivity controls response strength, smoothing calms jitter,
+  threshold ignores quiet sound, rate controls ring expansion, and decay controls how
+  quickly rings fade. System audio depends on OS capture support and the selected share
   source; denied or unavailable capture leaves the scene rendering normally.
 
 Segmentation downloads its model on first use, then reuses the browser cache.
