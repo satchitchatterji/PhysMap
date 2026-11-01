@@ -1,7 +1,7 @@
 # Implementation plan
 
 - [x] Youtube removal
-- [ ] Disk-stream videos
+- [x] Disk-stream videos
 - [ ] Midpoint insertion
 - [ ] Camera alignment
 - [ ] SlimSAM masks
@@ -20,3 +20,19 @@
 - Verification: 4 geometry tests, changed-JavaScript syntax checks, and diff whitespace checks passed. Build deferred until dependency installation completes (Vite initially unavailable).
 - Limitations: none known for this step.
 - Intended commit: `Remove YouTube embeds and extract homography helpers`
+
+## Step 2: Disk-stream videos
+
+- Native file picking and token-based `physmap-media` streaming support GET/HEAD,
+  byte ranges, seeking, and relinking. Scene version 3 stores `{kind: 'file', path,
+  name}` rather than bytes. Browser files use session handles/object URLs;
+  legacy embedded videos still load. Play/pause and a seek slider are available.
+- Media elements and object URLs are released on replacement/deletion. Browser
+  File references remain session-local so undo can restore them without copying bytes.
+- Verification: 4 byte-range/protocol tests passed, renderer/backend syntax checks
+  passed, and production build passed using Vite directly while npm finishes setup.
+  Step 1 also passes that build.
+- Limitations: real multi-GB playback/memory and packaged Electron checks require
+  a representative video and interactive desktop verification. Browser reopening
+  requires reselection; external videos are not bundled in scene exports.
+- Intended commit: `Stream local videos from disk and add playback controls`

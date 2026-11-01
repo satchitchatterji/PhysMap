@@ -3976,6 +3976,11 @@
               <button data-fill="image">Use Image</button>
               <button data-fill="video">Use Video</button>
             </div>
+            <div id="video-controls" hidden>
+              <p id="video-status" role="status" style="font: 12px sans-serif; overflow-wrap: anywhere"></p>
+              <div class="props-row"><button id="video-toggle">Pause</button><button id="video-relink">Relink Video</button></div>
+              <input id="video-seek" aria-label="Video position" type="range" min="0" max="0" step="0.1" value="0" style="width:100%" />
+            </div>
           </div>
         </details>
       </div>

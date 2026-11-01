@@ -16,6 +16,7 @@
 //   PERFORM -> same warp as MAP but with NO overlay — this is what's projected.
 
 import { config } from './config.js';
+import { browserVideo, mountVideo, disposeVideo } from './media.js';
 import {
   step,
   allBodies,
@@ -614,34 +615,52 @@ function loadShapeImage(shape) {
   img.src = shape.image;
 }
 
-// Decode a shape's stored video into a looping, muted <video> for the 'video'
-// fill. The element lives in a hidden pool so it keeps decoding frames that the
-// renderer draws (and perspective-warps) onto the shape each frame.
+// Resolve disk references without copying media into scene/history snapshots.
 function loadShapeVideo(shape) {
-  if (shape._video) {
-    shape._video.remove();
-    shape._video = null;
-  }
-  if (!shape.video) return;
-  const v = document.createElement('video');
-  v.muted = true;
-  v.loop = true;
-  v.autoplay = true;
-  v.playsInline = true;
-  v.src = shape.video;
-  mediaPool.appendChild(v);
-  shape._video = v;
-  v.play().catch(() => {});
+  mountVideo(shape, mediaPool, desktopOutput, (updated) => {
+    if (app.getSelectedShape() === updated) updateVideoControls(updated);
+  });
 }
 
-// Stop and detach a shape's <video> element (on delete / scene clear).
 function disposeShapeVideo(shape) {
-  if (!shape || !shape._video) return;
-  shape._video.pause();
-  shape._video.removeAttribute('src');
-  shape._video.load();
-  shape._video.remove();
-  shape._video = null;
+  if (shape) disposeVideo(shape);
+}
+
+function updateVideoControls(shape = app.getSelectedShape()) {
+  const controls = document.getElementById('video-controls');
+  if (!controls) return;
+  controls.hidden = !shape?.video;
+  const video = shape?._video;
+  document.getElementById('video-status').textContent = shape?._videoError || shape?.video?.name || '';
+  document.getElementById('video-toggle').textContent = video?.paused ? 'Play' : 'Pause';
+  document.getElementById('video-toggle').disabled = !video;
+  const seek = document.getElementById('video-seek');
+  seek.disabled = !video || !Number.isFinite(video.duration);
+  seek.max = Number.isFinite(video?.duration) ? video.duration : 0;
+  if (document.activeElement !== seek) seek.value = video?.currentTime || 0;
+}
+
+function assignVideo(shape, reference) {
+  if (!app.shapes.includes(shape)) return;
+  history.checkpoint();
+  shape.video = reference;
+  shape.fill = 'video';
+  loadShapeVideo(shape);
+  commitSceneChange();
+  updatePropsPanel();
+}
+
+async function chooseShapeVideo() {
+  const shape = app.getSelectedShape();
+  if (!shape) return;
+  if (!desktopOutput?.chooseVideo) {
+    document.getElementById('props-video-file').click();
+    return;
+  }
+  try {
+    const file = await desktopOutput.chooseVideo();
+    if (file) assignVideo(shape, { kind: 'file', path: file.path, name: file.name });
+  } catch (error) { flash(error.message); }
 }
 
 function isFullScreenQuad(corners, w, h) {
@@ -2143,7 +2162,7 @@ function applyFill(fill) {
     return;
   }
   if (fill === 'video' && !s.video) {
-    document.getElementById('props-video-file').click();
+    chooseShapeVideo();
     return;
   }
   history.checkpoint();
@@ -2781,6 +2800,7 @@ function updatePhysicsInspector(selectionType, item) {
 }
 
 function updatePropsPanel() {
+  updateVideoControls();
   const panel = document.getElementById('props');
   if (!panel) return;
   const s = app.getSelectedShape();
@@ -3009,23 +3029,22 @@ function wireProps() {
     f.value = '';
   });
 
-  // Video file → decode into a looping <video> and map it onto the shape.
   const vf = document.getElementById('props-video-file');
-  document.getElementById('props-video-btn').addEventListener('click', () => vf.click());
+  document.getElementById('props-video-btn').addEventListener('click', chooseShapeVideo);
+  document.getElementById('video-relink').addEventListener('click', chooseShapeVideo);
   vf.addEventListener('change', () => {
-    const s = app.getSelectedShape();
-    if (!s || !vf.files.length) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      history.checkpoint();
-      s.video = reader.result;
-      loadShapeVideo(s);
-      s.fill = 'video';
-      commitSceneChange();
-      updatePropsPanel();
-    };
-    reader.readAsDataURL(vf.files[0]);
+    const shape = app.getSelectedShape();
+    if (shape && vf.files.length) assignVideo(shape, browserVideo(vf.files[0]));
     vf.value = '';
+  });
+  document.getElementById('video-toggle').addEventListener('click', () => {
+    const video = app.getSelectedShape()?._video;
+    if (video?.paused) video.play().catch(error => flash(error.message));
+    else video?.pause();
+  });
+  document.getElementById('video-seek').addEventListener('input', event => {
+    const video = app.getSelectedShape()?._video;
+    if (video && Number.isFinite(video.duration)) video.currentTime = Number(event.target.value);
   });
 
   const updateSelectedPhysics = (mutate) => {

@@ -88,7 +88,7 @@ export function serialize(app) {
   const viewport = app.getViewport ? app.getViewport() : null;
 
   return {
-    version: 2,
+    version: 3,
     obstacles,
     emitters,
     drawings,

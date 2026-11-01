@@ -1,7 +1,23 @@
-const { app, BrowserWindow, ipcMain, screen, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, protocol, screen, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
+const {
+  MEDIA_SCHEME,
+  VIDEO_EXTENSIONS,
+  createMediaProtocolHandler,
+  getVideoInfo,
+} = require('./media.cjs');
+
+protocol.registerSchemesAsPrivileged([{
+  scheme: MEDIA_SCHEME,
+  privileges: {
+    standard: true,
+    secure: true,
+    supportFetchAPI: true,
+    stream: true,
+  },
+}]);
 
 const REPOSITORY_URL = 'https://github.com/mirauta-alexandru/PhysMap';
 const RELEASES_URL = `${REPOSITORY_URL}/releases`;
@@ -9,6 +25,7 @@ const OUTPUT_FRAME_PREFIX = 'physmap-output-';
 let mainWindow = null;
 let outputWindow = null;
 let outputDisplayId = null;
+const mediaProtocol = createMediaProtocolHandler();
 let updateState = {
   status: 'idle',
   currentVersion: app.getVersion(),
@@ -162,6 +179,32 @@ function getDisplays() {
   }));
 }
 
+function isMainWindowIpc(event) {
+  return Boolean(
+    mainWindow
+    && !mainWindow.isDestroyed()
+    && event.sender === mainWindow.webContents
+    && event.senderFrame === event.sender.mainFrame,
+  );
+}
+
+async function resolveVideoForEditor(event, filePath) {
+  if (!isMainWindowIpc(event)) throw new Error('Video access is available only to the PhysMap editor.');
+  return getVideoInfo(filePath, mediaProtocol.makeVideoUrl);
+}
+
+async function chooseVideoForEditor(event) {
+  if (!isMainWindowIpc(event)) throw new Error('Video access is available only to the PhysMap editor.');
+  const extensions = [...VIDEO_EXTENSIONS].map((extension) => extension.slice(1));
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose a video',
+    properties: ['openFile'],
+    filters: [{ name: 'Video files', extensions }],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return getVideoInfo(result.filePaths[0], mediaProtocol.makeVideoUrl);
+}
+
 function findDisplay(id) {
   return screen.getAllDisplays().find((display) => String(display.id) === String(id));
 }
@@ -293,6 +336,7 @@ app.setAboutPanelOptions({
 });
 
 app.whenReady().then(() => {
+  protocol.handle(MEDIA_SCHEME, mediaProtocol.handle);
   setupAutoUpdater();
   ipcMain.handle('physmap:list-displays', () => getDisplays());
   ipcMain.handle('physmap:close-output', () => closeOutputWindow());
@@ -306,6 +350,8 @@ app.whenReady().then(() => {
     }
     return publicUpdateState();
   });
+  ipcMain.handle('physmap:choose-video', chooseVideoForEditor);
+  ipcMain.handle('physmap:resolve-video', resolveVideoForEditor);
 
   createWindow();
   mainWindow.webContents.once('did-finish-load', () => {

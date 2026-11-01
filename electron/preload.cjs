@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('physmapDesktop', {
   isDesktop: true,
+  chooseVideo: () => ipcRenderer.invoke('physmap:choose-video'),
+  resolveVideo: (filePath) => ipcRenderer.invoke('physmap:resolve-video', filePath),
   listDisplays: () => ipcRenderer.invoke('physmap:list-displays'),
   closeOutput: () => ipcRenderer.invoke('physmap:close-output'),
   getUpdateState: () => ipcRenderer.invoke('physmap:update-state'),
