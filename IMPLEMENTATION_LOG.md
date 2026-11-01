@@ -133,3 +133,18 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   run `npm rebuild electron`, then `npm run desktop` (or `npm run pack`).
 - Browser development is available now with `npm run dev`. No installers were
   published and no remote repository changes were pushed.
+
+## Electron download completed
+
+- Installed Electron 41.7.1 for macOS arm64. GitHub release downloads stalled;
+  the fallback mirror completed using parallel HTTP/1.1 range requests.
+- Reassembled ZIP size: 116,319,822 bytes. SHA-256 matches the checksum bundled
+  with the pinned Electron npm package:
+  `a092f0c1aa722037fa07d3256d5bf4aef2833d990bf4d09fe907d588c35b341d`.
+- ZIP integrity passed. Native macOS extraction completed the installation after
+  the JavaScript extractor exited early. The executable reports `v41.7.1` outside
+  the command sandbox; `require('electron')` resolves to the installed executable.
+- `npm rebuild electron` completes successfully. `npm run desktop` builds and
+  starts the Electron app. The earlier runtime-download blocker is resolved;
+  the remaining physical camera/projector/media checks still apply.
+- Intended commit: `Record verified Electron runtime installation`
