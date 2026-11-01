@@ -45,3 +45,12 @@ test('calibration persists normalized pairs and reconstructs its matrix', () => 
   applyScene({ ...saved, cameraCalibration: { cameraPoints: [], workspacePoints: [] } }, app);
   assert.equal(app.cameraCalibration, null);
 });
+
+test('layer order and zero opacity survive scene round-trip', () => {
+  const app = fixture();
+  const points = [[0,0],[10,0],[10,10]];
+  app.shapes = [makeShape({points, name:'Back', opacity:0}), makeShape({points, name:'Front', opacity:0.4})];
+  applyScene(serialize(app), app);
+  assert.deepEqual(app.shapes.map(shape => shape.name), ['Back', 'Front']);
+  assert.deepEqual(app.shapes.map(shape => shape.opacity), [0, 0.4]);
+});

@@ -2310,7 +2310,6 @@
       #props.layers-view #layers-panel {
         display: block;
       }
-      #props.layers-view #object-controls,
       #props.layers-view #inspector-empty,
       #props.layers-view #physics-inspector,
       #props.layers-view > .inspector-scroll,
@@ -3683,6 +3682,16 @@
           <button id="object-visible">Visible</button>
           <button id="object-lock">Unlocked</button>
           <button id="object-duplicate">Duplicate</button>
+        </div>
+        <div id="surface-layer-controls" hidden>
+          <div class="effect-grid" style="margin-top:8px">
+            <button data-surface-order="front">Bring to Front</button>
+            <button data-surface-order="back">Send to Back</button>
+            <button data-surface-order="forward">Forward</button>
+            <button data-surface-order="backward">Backward</button>
+          </div>
+          <label for="surface-opacity" class="props-label">Opacity <output id="surface-opacity-value">100%</output></label>
+          <input id="surface-opacity" type="range" min="0" max="100" step="1" value="100" style="width:100%" />
         </div>
       </section>
 

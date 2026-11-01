@@ -5,7 +5,7 @@
 - [x] Midpoint insertion
 - [x] Camera alignment
 - [x] SlimSAM masks
-- [ ] Ordered layers
+- [x] Ordered layers
 
 ## Step 1: Youtube removal
 
@@ -80,3 +80,19 @@
 - Limitations: model cache eviction requires a fresh download; offline packaged
   behavior and mask quality on real objects need field verification. Holes are omitted.
 - Intended commit: `Generate editable camera masks with on-demand SlimSAM`
+
+## Step 6: Ordered surface layers
+
+- Surface order uses the existing bottom-to-top shape array, with front/back and
+  single-step controls available in Properties and Layers. Layer selection stays
+  in Layers. Each surface has saved opacity, including fully transparent surfaces.
+- Translucent surfaces composite as a group through a shared scratch canvas, so
+  overlapping strokes/fills do not multiply opacity. Global Cut masks retain their
+  final render pass, and hit testing follows the same mask-first priority.
+- Visibility, lock, duplicate, independent image/video content and undo are retained.
+- Verification: ordering/clamp/default tests and scene order/zero-opacity round-trip
+  tests pass. Browser checks confirmed opacity changes and duplication; final
+  ordering/undo/reload checks follow. Production build passes.
+- Limitations: multiple high-resolution decoders and Canvas2D perspective warps
+  remain hardware-dependent; no custom native renderer was introduced.
+- Intended commit: `Add surface stacking controls and whole-surface opacity`

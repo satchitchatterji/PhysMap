@@ -18,6 +18,7 @@
 import { config } from './config.js';
 import { createCameraSetup } from './camera.js';
 import { projectPoint } from './geometry.js';
+import { reorderShape } from './layers.js';
 import { browserVideo, mountVideo, disposeVideo } from './media.js';
 import {
   step,
@@ -2827,6 +2828,19 @@ function updatePropsPanel() {
   if (!panel) return;
   const s = app.getSelectedShape();
   const physics = getSelectedPhysicsObject();
+  const layerControls = document.getElementById('surface-layer-controls');
+  layerControls.hidden = !s;
+  if (s) {
+    const index = app.shapes.indexOf(s);
+    document.getElementById('surface-opacity').value = Math.round((s.opacity ?? 1) * 100);
+    document.getElementById('surface-opacity-value').textContent = `${Math.round((s.opacity ?? 1) * 100)}%`;
+    document.getElementById('surface-opacity').disabled = s.locked;
+    layerControls.querySelectorAll('[data-surface-order]').forEach(button => {
+      const atEnd = ['front', 'forward'].includes(button.dataset.surfaceOrder)
+        ? index === app.shapes.length - 1 : index === 0;
+      button.disabled = s.locked || atEnd;
+    });
+  }
   const isEditing = app.mode === 'edit';
   const empty = document.getElementById('inspector-empty');
   const shapeName = document.getElementById('inspector-shape-name');
@@ -2885,6 +2899,26 @@ function updatePropsPanel() {
 }
 
 function wireProps() {
+  document.querySelectorAll('[data-surface-order]').forEach(button => {
+    button.addEventListener('click', () => {
+      const shape = app.getSelectedShape();
+      if (!shape || shape.locked) return;
+      history.checkpoint();
+      if (reorderShape(app.shapes, shape.id, button.dataset.surfaceOrder)) commitSceneChange();
+    });
+  });
+  let opacityEditing = null;
+  const opacity = document.getElementById('surface-opacity');
+  opacity.addEventListener('input', () => {
+    const shape = app.getSelectedShape();
+    if (!shape || shape.locked) return;
+    if (opacityEditing !== shape) { history.checkpoint(); opacityEditing = shape; }
+    shape.opacity = Number(opacity.value) / 100;
+    document.getElementById('surface-opacity-value').textContent = `${opacity.value}%`;
+  });
+  opacity.addEventListener('change', () => {
+    if (opacityEditing) { opacityEditing = null; commitSceneChange(); }
+  });
   document.getElementById('inspector-tab-properties').addEventListener('click', () => {
     setInspectorView('properties');
   });
@@ -2912,7 +2946,7 @@ function wireProps() {
       setInspectorView('layers');
       return;
     }
-    selectSceneObject(selectionType, id);
+    selectSceneObject(selectionType, id, false);
   });
 
   const objectName = document.getElementById('object-name');

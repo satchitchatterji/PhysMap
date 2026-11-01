@@ -22,11 +22,14 @@ import { world } from './physics.js';
 import { warpImageToQuad } from './mapping.js';
 import { renderAnimation } from './animations.js';
 import { splitPathEdge } from './pathEditing.js';
+import { clampOpacity } from './layers.js';
 
 const { Bodies, Composite, Vertices } = Matter;
 const TAU = Math.PI * 2;
 
 let nextId = 1;
+let shapeOpacityCanvas = null;
+let shapeOpacityContext = null;
 
 // In-progress drawing state, read by the renderer to show a live preview.
 let preview = null; // square/triangle drag preview: { type, points }
@@ -89,6 +92,7 @@ export function makeShape(opts) {
     name: typeof opts.name === 'string' ? opts.name : '',
     visible: opts.visible !== false,
     locked: opts.locked === true,
+    opacity: clampOpacity(opts.opacity),
     type: opts.type || 'poly', // 'rect' | 'triangle' | 'poly' | 'line'
     points: opts.points.map((p) => [p[0], p[1]]),
     // Open polyline ('line') vs closed polygon (everything else). When undefined
@@ -463,6 +467,56 @@ function drawMask(ctx, shape, editMode) {
   ctx.restore();
 }
 
+// Render a translucent shape as one surface so overlapping fills, outlines and
+// glow do not compound opacity. The scratch canvas is shared by every shape.
+function drawShapeWithOpacity(ctx, shape, draw) {
+  const opacity = clampOpacity(shape.opacity);
+  if (opacity >= 1) {
+    draw(ctx);
+    return;
+  }
+  if (opacity <= 0) return;
+
+  const targetCanvas = ctx.canvas;
+  const width = targetCanvas?.width || 0;
+  const height = targetCanvas?.height || 0;
+  if (!width || !height || (typeof document === 'undefined' && typeof OffscreenCanvas === 'undefined')) {
+    ctx.save();
+    ctx.globalAlpha *= opacity;
+    draw(ctx);
+    ctx.restore();
+    return;
+  }
+
+  if (!shapeOpacityCanvas) {
+    shapeOpacityCanvas = typeof OffscreenCanvas !== 'undefined'
+      ? new OffscreenCanvas(width, height)
+      : document.createElement('canvas');
+    shapeOpacityContext = shapeOpacityCanvas.getContext('2d');
+  }
+  if (shapeOpacityCanvas.width !== width) shapeOpacityCanvas.width = width;
+  if (shapeOpacityCanvas.height !== height) shapeOpacityCanvas.height = height;
+
+  const transform = ctx.getTransform();
+  shapeOpacityContext.imageSmoothingEnabled = ctx.imageSmoothingEnabled;
+  shapeOpacityContext.imageSmoothingQuality = ctx.imageSmoothingQuality;
+  shapeOpacityContext.save();
+  shapeOpacityContext.setTransform(1, 0, 0, 1, 0, 0);
+  shapeOpacityContext.clearRect(0, 0, width, height);
+  shapeOpacityContext.setTransform(
+    transform.a, transform.b, transform.c, transform.d, transform.e, transform.f,
+  );
+  draw(shapeOpacityContext);
+  shapeOpacityContext.restore();
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha *= opacity;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(shapeOpacityCanvas, 0, 0);
+  ctx.restore();
+}
+
 // Draw all shapes. In edit mode also draws outlines + vertex handles on the
 // selected shape, plus the in-progress create/poly preview.
 export function drawShapes(ctx, app, editMode, now) {
@@ -470,12 +524,14 @@ export function drawShapes(ctx, app, editMode, now) {
   for (const shape of app.shapes) {
     if (shape.visible === false) continue;
     if (shape.fill === 'mask') continue;
-    drawOneShape(ctx, shape, now);
+    drawShapeWithOpacity(ctx, shape, (surfaceCtx) => drawOneShape(surfaceCtx, shape, now));
   }
   // Mask pass: opaque-black cut-outs on top of everything.
   for (const shape of app.shapes) {
     if (shape.visible === false) continue;
-    if (shape.fill === 'mask') drawMask(ctx, shape, editMode);
+    if (shape.fill === 'mask') {
+      drawShapeWithOpacity(ctx, shape, (surfaceCtx) => drawMask(surfaceCtx, shape, editMode));
+    }
   }
 
   if (!editMode) return;
@@ -654,17 +710,21 @@ export function initShapeInput(canvas, app, hooks = {}) {
   }
 
   function topShapeAt(x, y) {
-    for (let i = app.shapes.length - 1; i >= 0; i--) {
-      const s = app.shapes[i];
-      if (s.visible === false) continue;
-      const pts = s.role === 'dynamic' && s.body ? s.body.vertices.map((v) => [v.x, v.y]) : s.points;
-      if (s.closed === false) {
-        for (let edge = 0; edge < pts.length - 1; edge++) {
-          if (distToSegment(x, y, pts[edge], pts[edge + 1]) <= 12) return s;
+    // Masks render in a final top pass, so they take hit priority regardless
+    // of their position in the bottom-to-top shape array.
+    for (const masksOnly of [true, false]) {
+      for (let i = app.shapes.length - 1; i >= 0; i--) {
+        const s = app.shapes[i];
+        if (s.visible === false || (s.fill === 'mask') !== masksOnly) continue;
+        const pts = s.role === 'dynamic' && s.body ? s.body.vertices.map((v) => [v.x, v.y]) : s.points;
+        if (s.closed === false) {
+          for (let edge = 0; edge < pts.length - 1; edge++) {
+            if (distToSegment(x, y, pts[edge], pts[edge + 1]) <= 12) return s;
+          }
+          continue;
         }
-        continue;
+        if (pointInPolygon(x, y, pts)) return s;
       }
-      if (pointInPolygon(x, y, pts)) return s;
     }
     return null;
   }

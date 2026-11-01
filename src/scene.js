@@ -68,6 +68,7 @@ export function serialize(app) {
     name: s.name || '',
     visible: s.visible !== false,
     locked: s.locked === true,
+    opacity: s.opacity ?? 1,
     type: s.type,
     points: s.points.map((p) => [p[0], p[1]]),
     closed: s.closed,
