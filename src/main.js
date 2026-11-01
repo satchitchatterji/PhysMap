@@ -622,6 +622,7 @@ function loadShapeImage(shape) {
 
 // Resolve disk references without copying media into scene/history snapshots.
 function loadShapeVideo(shape) {
+  if (shape.fill !== 'video') { disposeShapeVideo(shape); return; }
   mountVideo(shape, mediaPool, desktopOutput, (updated) => {
     if (app.getSelectedShape() === updated) updateVideoControls(updated);
   });
@@ -1500,6 +1501,9 @@ function resetHistory() {
 let history = null;
 
 function commitSceneChange() {
+  for (const shape of app.shapes) {
+    if (shape.fill !== 'video' && (shape._video || shape._videoLoad)) disposeShapeVideo(shape);
+  }
   saveCurrentProject();
   updateUI();
 }
@@ -2190,6 +2194,8 @@ function applyFill(fill) {
   }
   history.checkpoint();
   s.fill = fill;
+  if (fill === 'video') loadShapeVideo(s);
+  else disposeShapeVideo(s);
   s.quickLook = '';
   commitSceneChange();
   updatePropsPanel();

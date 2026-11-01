@@ -96,3 +96,40 @@
 - Limitations: multiple high-resolution decoders and Canvas2D perspective warps
   remain hardware-dependent; no custom native renderer was introduced.
 - Intended commit: `Add surface stacking controls and whole-surface opacity`
+
+## Final integration verification and fixes
+
+- Browser UI verified saved opacity after reload, layer selection staying in Layers,
+  Send to Back ordering and Undo restoration. A closed line midpoint drag produced
+  a new vertex with fresh midpoint handles on both resulting edges.
+- Fixed image fills accidentally preferring a retained video decoder, and release
+  decoders when changing to non-video content. Reuse file tokens across scene undo
+  restores. Grow the shared opacity buffer instead of reallocating it as editor and
+  projector backing sizes alternate. Layer order buttons use two readable columns.
+- Added a media rendering regression test; `npm test` now passes 25 tests.
+- Documented operation, file references, model caching and hardware limitations in
+  README. No framework, custom native module, or network inference service was added.
+- Intended commit: `Polish media lifecycle and document verified projection workflow`
+
+## Remaining field checks
+
+- [ ] Multi-GB supported video: seek near end, loop, relink, reopen, and inspect
+  memory to confirm it stays independent of file size.
+- [ ] Packaged macOS: allow/deny camera, switch/disconnect device, close setup and
+  verify the camera indicator turns off.
+- [ ] Physical projector: verify four targets and accepted contours align on one
+  plane, with no editor/camera/mask UI in clean output.
+- [ ] Packaged app offline after model caching: generate and refine a mask.
+
+These need representative media/hardware or a packaged desktop session; they are
+not claimed as completed by automated tests or the synthetic-frame browser check.
+
+## Desktop runtime setup
+
+- npm dependencies and the pinned ML dependency are installed; build/tests pass.
+  Electron's separate binary download was attempted, but transferred under 1 MB
+  in several minutes. It was stopped rather than leaving a long-running installer.
+- Desktop launch/package verification remains pending. On a normal connection,
+  run `npm rebuild electron`, then `npm run desktop` (or `npm run pack`).
+- Browser development is available now with `npm run dev`. No installers were
+  published and no remote repository changes were pushed.

@@ -376,7 +376,7 @@ function drawOneShape(ctx, shape, now) {
   const strokeWidth = shape.strokeWidth || config.shapeOutlineWidth;
 
   // An image is ready when decoded; a video is ready once it has frame data.
-  const media = shape._video || shape._img;
+  const media = shape.fill === 'video' ? shape._video : shape._img;
   const mediaReady = media && (media.complete || media.readyState >= 2);
 
   ctx.save();
@@ -494,15 +494,17 @@ function drawShapeWithOpacity(ctx, shape, draw) {
       : document.createElement('canvas');
     shapeOpacityContext = shapeOpacityCanvas.getContext('2d');
   }
-  if (shapeOpacityCanvas.width !== width) shapeOpacityCanvas.width = width;
-  if (shapeOpacityCanvas.height !== height) shapeOpacityCanvas.height = height;
+  // Editor and projector can have different backing sizes. Grow rather than
+  // reallocating this buffer twice per frame as their renders alternate.
+  if (shapeOpacityCanvas.width < width) shapeOpacityCanvas.width = width;
+  if (shapeOpacityCanvas.height < height) shapeOpacityCanvas.height = height;
 
   const transform = ctx.getTransform();
   shapeOpacityContext.imageSmoothingEnabled = ctx.imageSmoothingEnabled;
   shapeOpacityContext.imageSmoothingQuality = ctx.imageSmoothingQuality;
   shapeOpacityContext.save();
   shapeOpacityContext.setTransform(1, 0, 0, 1, 0, 0);
-  shapeOpacityContext.clearRect(0, 0, width, height);
+  shapeOpacityContext.clearRect(0, 0, shapeOpacityCanvas.width, shapeOpacityCanvas.height);
   shapeOpacityContext.setTransform(
     transform.a, transform.b, transform.c, transform.d, transform.e, transform.f,
   );

@@ -50,9 +50,11 @@ function parseByteRange(header, size) {
 
 function createMediaProtocolHandler() {
   const allowedPaths = new Map();
+  const pathTokens = new Map();
 
   function makeVideoUrl(filePath) {
-    const token = randomUUID();
+    const token = pathTokens.get(filePath) || randomUUID();
+    pathTokens.set(filePath, token);
     allowedPaths.set(token, filePath);
     return `${MEDIA_SCHEME}://video/${token}`;
   }

@@ -122,6 +122,36 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
 
 ---
 
+## Custom workflow
+
+- **Large videos:** choose a local video in Media. Desktop playback streams from
+  disk; play/pause, seek, and Relink are in the same panel. Scene files reference
+  videos rather than embedding them, so keep source files available when moving
+  a project. H.264 MP4 is a practical starting format; playback depends on codec support.
+- **Camera masks:** start projector output, then open Camera. The projector shows
+  four numbered targets. Freeze the camera frame and click those targets in order.
+  Choose Create mask, click inside an object, refine with Foreground/Background
+  points, then Use mask. The result is an editable surface ready for image/video
+  content. Saved alignment can be reused if the camera has not moved.
+- **Midpoints:** selected line shapes always show edge midpoints. Drag one to add
+  a corner; Alt/Option-drag bends an edge. Newly split edges get new midpoints.
+- **Layers:** use Properties or Layers to move a surface forward/backward or to
+  the front/back, set opacity, hide, lock, or duplicate it. Cut masks remain above
+  ordinary surfaces; physics keeps its existing rendering order.
+
+Segmentation downloads its model on first use, then reuses the browser cache.
+Frames stay on the device. Clearing/evicting that cache requires another download.
+Alignment assumes one flat region; objects at different depths need manual edits.
+Generated masks use a simplified outer contour and omit holes.
+
+Run `npm test` and `npm run build` to verify changes. For a generated-image model
+check without a camera, start `npm run dev` and open
+`http://localhost:5173/tests/segmentation-smoke.html`.
+See [IMPLEMENTATION_LOG.md](IMPLEMENTATION_LOG.md) for completed steps and remaining
+hardware checks.
+
+---
+
 ## Keyboard shortcuts
 
 | Key | Action |
