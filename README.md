@@ -114,7 +114,7 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
    (For a line, click point by point and double-click to finish; click back on the
    first point to close it into a shape.)
 3. **Fit it** &mdash; switch to Select (`V`) and drag the corner points until the
-   shape sits exactly on the object. With a line, drag any segment to curve it.
+   shape sits exactly on the object. With a selected line, drag a midpoint to add a vertex; Option/Alt-drag bends an edge.
 4. **Set its look** &mdash; in the inspector pick a fill (solid, glow, image, video,
    animation, cut mask...) and a color.
 5. **Align and play** &mdash; everything you do mirrors to the projector output in
@@ -129,7 +129,7 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
 | `V` | Select / move shapes, drag points |
 | `Q` | Square / rectangle |
 | `T` | Triangle |
-| `Y` | Line (drag a segment to curve it) |
+| `Y` | Line (drag a midpoint to add a vertex; Alt/Option to bend) |
 | `X` | Particle emitter |
 | `1` / `2` / `3` | Place an orb / cube / shard |
 | `G` / `H` / `J` | Gravity / repulsor / vortex |

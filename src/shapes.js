@@ -21,6 +21,7 @@ import { config } from './config.js';
 import { world } from './physics.js';
 import { warpImageToQuad } from './mapping.js';
 import { renderAnimation } from './animations.js';
+import { splitPathEdge } from './pathEditing.js';
 
 const { Bodies, Composite, Vertices } = Matter;
 const TAU = Math.PI * 2;
@@ -111,7 +112,7 @@ export function makeShape(opts) {
       : 'snake',
     outlineSpeed: Math.max(0.25, Math.min(3, Number(opts.outlineSpeed) || 1)),
     image: opts.image || null, // dataURL when fill === 'image'
-    video: opts.video || null, // dataURL when fill === 'video'
+    video: opts.video || null, // persisted video reference when fill === 'video'
     _img: null, // decoded HTMLImageElement cache
     _video: null, // HTMLVideoElement cache for the 'video' fill
     _animCanvas: null, // offscreen cache for animated fills
@@ -614,6 +615,7 @@ export function initShapeInput(canvas, app, hooks = {}) {
   let startX = 0, startY = 0;
   let dragVertexIndex = -1;
   let dragEdgeIndex = -1;
+  let pendingInsert = null;
   let moveLast = null;
   let movePointerOffset = null;
   let committed = false;
@@ -702,8 +704,16 @@ export function initShapeInput(canvas, app, hooks = {}) {
             return;
           }
         }
-        // 2) grab a curve grip (edge midpoint) → bend that edge
+        // 2) grab an edge midpoint. Line paths insert a vertex by default;
+        // Alt/Option keeps the midpoint's curve-bending behavior.
         let edge = curveGripAt(sel, p.x, p.y);
+        if (edge >= 0 && sel.type === 'line' && !e.altKey) {
+          // Wait for an actual drag so clicking a grip alone doesn't alter the path.
+          pendingInsert = { edge, startX: p.x, startY: p.y };
+          mode = 'insertPending';
+          canvas.setPointerCapture?.(e.pointerId);
+          return;
+        }
         // For an open line you can also grab anywhere along a segment.
         if (edge < 0) edge = lineEdgeNear(sel, p.x, p.y);
         if (edge >= 0) {
@@ -771,6 +781,20 @@ export function initShapeInput(canvas, app, hooks = {}) {
         app.tool === 'triangle'
           ? trianglePoints(startX, startY, p.x, p.y)
           : rectPoints(startX, startY, p.x, p.y);
+    } else if (mode === 'insertPending' && pendingInsert
+      && dist(p.x, p.y, pendingInsert.startX, pendingInsert.startY) > 2) {
+      const sel = app.shapes.find((s) => s.id === app.selectedShapeId);
+      if (sel && !sel.locked) {
+        const split = splitPathEdge(sel.points, sel.curves, sel.closed, pendingInsert.edge);
+        beforeChange();
+        sel.points = split.points;
+        sel.curves = split.curves;
+        sel.points[split.vertexIndex] = [p.x, p.y];
+        mode = 'vertex';
+        dragVertexIndex = split.vertexIndex;
+        committed = true;
+        pendingInsert = null;
+      }
     } else if (mode === 'vertex') {
       const sel = app.shapes.find((s) => s.id === app.selectedShapeId);
       if (sel && !sel.locked && dragVertexIndex >= 0) {
@@ -848,6 +872,7 @@ export function initShapeInput(canvas, app, hooks = {}) {
     mode = null;
     dragVertexIndex = -1;
     dragEdgeIndex = -1;
+    pendingInsert = null;
     moveLast = null;
     movePointerOffset = null;
     if (e) canvas.releasePointerCapture?.(e.pointerId);

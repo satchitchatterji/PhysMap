@@ -2,7 +2,7 @@
 
 - [x] Youtube removal
 - [x] Disk-stream videos
-- [ ] Midpoint insertion
+- [x] Midpoint insertion
 - [ ] Camera alignment
 - [ ] SlimSAM masks
 - [ ] Ordered layers
@@ -36,3 +36,13 @@
   a representative video and interactive desktop verification. Browser reopening
   requires reselection; external videos are not bundled in scene exports.
 - Intended commit: `Stream local videos from disk and add playback controls`
+
+## Step 3: Midpoint insertion
+
+- Every selected unlocked line edge retains a visible midpoint, including the
+  closing edge. Dragging inserts a vertex; Alt/Option keeps curve bending.
+- Quadratics split exactly with de Casteljau before the new vertex moves. Each
+  gesture checkpoints once. Rectangle/triangle behavior stays unchanged.
+- Verification: 4 open/closed/curved path tests and production build passed.
+- Limitations: real pointer/undo verification remains in the final browser pass.
+- Intended commit: `Insert editable line vertices from persistent midpoints`
