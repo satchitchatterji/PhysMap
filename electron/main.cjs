@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, protocol, screen, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, protocol, screen, shell, systemPreferences } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
@@ -247,6 +247,20 @@ function createWindow() {
     },
   });
 
+  const editorSession = mainWindow.webContents.session;
+  editorSession.setPermissionCheckHandler((contents, permission, _origin, details) => (
+    contents === mainWindow?.webContents && permission === 'media' && details.mediaType === 'video'
+  ));
+  editorSession.setPermissionRequestHandler(async (contents, permission, callback, details) => {
+    const videoOnly = details.mediaTypes?.length === 1 && details.mediaTypes[0] === 'video';
+    if (contents !== mainWindow?.webContents || permission !== 'media' || !videoOnly) {
+      callback(false);
+      return;
+    }
+    try {
+      callback(process.platform !== 'darwin' || await systemPreferences.askForMediaAccess('camera'));
+    } catch { callback(false); }
+  });
   mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
 
   mainWindow.webContents.setWindowOpenHandler(({ url, frameName = '' }) => {

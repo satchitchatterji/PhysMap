@@ -20,6 +20,7 @@
 //   }
 
 import { config } from './config.js';
+import { solveHomography } from './geometry.js';
 import {
   allBodies,
   clearObstacles,
@@ -95,6 +96,13 @@ export function serialize(app) {
     shapes,
     effects,
     viewport,
+    cameraCalibration: app.cameraCalibration ? {
+      cameraPoints: app.cameraCalibration.cameraPoints.map(p => [...p]),
+      workspacePoints: app.cameraCalibration.workspacePoints.map(p => [...p]),
+      cameraId: app.cameraCalibration.cameraId || '',
+      frameWidth: app.cameraCalibration.frameWidth,
+      frameHeight: app.cameraCalibration.frameHeight,
+    } : null,
     visualMode: app.visualMode,
     eyeStyle: app.eyeStyle,
   };
@@ -107,6 +115,16 @@ export function applyScene(data, app, onLegacyYoutube = null) {
     throw new Error('Invalid scene data');
   }
   clearDynamic();
+  app.cameraCalibration = null;
+  if (data.cameraCalibration) {
+    try {
+      const saved = data.cameraCalibration;
+      const matrix = solveHomography(saved.cameraPoints, saved.workspacePoints);
+      if (saved.frameWidth > 0 && saved.frameHeight > 0) {
+        app.cameraCalibration = { ...saved, matrix };
+      }
+    } catch { /* An invalid saved calibration can be replaced in Camera Setup. */ }
+  }
   clearObstacles();
   app.clearEmitters();
 

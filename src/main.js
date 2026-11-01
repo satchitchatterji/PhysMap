@@ -16,6 +16,7 @@
 //   PERFORM -> same warp as MAP but with NO overlay — this is what's projected.
 
 import { config } from './config.js';
+import { createCameraSetup } from './camera.js';
 import { browserVideo, mountVideo, disposeVideo } from './media.js';
 import {
   step,
@@ -79,6 +80,7 @@ let outputStream = null;
 let outputDisplay = null;
 let outputFrozen = false;
 let outputBlackout = false;
+let cameraTargets = null;
 let outputCalibration = localStorage.getItem('physmap-output-calibration') || 'off';
 let availableDisplays = [];
 let selectedDisplayId = localStorage.getItem('physmap-output-display') || '';
@@ -380,6 +382,7 @@ const app = {
   activeSurfaceId: null,
   visualMode: config.visualMode,
   eyeStyle: config.eyeStyle,
+  cameraCalibration: null,
   trackingTarget: null, // optional camera/car target: { x, y, vx, vy, lastSeen }
 
   // Emitter helpers (used by tools.js and scene.js).
@@ -975,6 +978,23 @@ function drawCalibrationPattern(targetCtx, mode, now) {
 }
 
 function drawProjectionFrame(targetCtx, now) {
+  if (cameraTargets) {
+    clear(targetCtx, width, height);
+    targetCtx.save();
+    targetCtx.font = 'bold 24px sans-serif';
+    targetCtx.textAlign = 'center';
+    targetCtx.textBaseline = 'middle';
+    cameraTargets.forEach(([x, y], i) => {
+      targetCtx.fillStyle = '#fff';
+      targetCtx.beginPath();
+      targetCtx.arc(x * width, y * height, 20, 0, Math.PI * 2);
+      targetCtx.fill();
+      targetCtx.fillStyle = '#000';
+      targetCtx.fillText(String(i + 1), x * width, y * height);
+    });
+    targetCtx.restore();
+    return;
+  }
   // Shapes are the projected content; draw them first, then the visual-mode
   // layer (falling particles in 'physics', or the facade eyes in 'eyes').
   drawShapes(targetCtx, app, false, now);
@@ -1462,6 +1482,7 @@ function applyToolDrag() {
 }
 
 function resetScene() {
+  app.cameraCalibration = null;
   clearDynamic();
   clearObstacles();
   app.clearEmitters();
@@ -3592,6 +3613,27 @@ window.addEventListener('keydown', (e) => {
       break;
   }
 });
+
+const cameraSetup = createCameraSetup({
+  getViewport: () => ({ width, height }),
+  getWorkspaceSnapshot: () => canvas,
+  getCalibration: () => app.cameraCalibration,
+  onCalibration: calibration => {
+    history.checkpoint();
+    app.cameraCalibration = calibration;
+    commitSceneChange();
+  },
+  onProjectorMarkers: points => { cameraTargets = points; },
+  onError: error => flash(error.message),
+  onFrame: frame => openCameraMask(frame),
+});
+
+function openCameraMask() {
+  flash('Camera calibrated. Mask generation is being integrated.');
+}
+
+document.getElementById('btn-camera').addEventListener('click', () => cameraSetup.open());
+window.addEventListener('beforeunload', () => cameraSetup.close());
 
 // ===========================================================================
 // Init

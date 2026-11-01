@@ -17,6 +17,8 @@ afterPack: scripts/after-pack.cjs
 generateUpdatesFilesForAllChannels: true
 
 mac:
+  extendInfo:
+    NSCameraUsageDescription: PhysMap uses your camera to align projection points and create editable surface masks.
   category: public.app-category.graphics-design
   icon: build/icon.icns
   target:

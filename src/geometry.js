@@ -1,5 +1,19 @@
 // Perspective geometry helpers shared by mapping and camera alignment.
 
+/** Convert a click in a contain-fitted preview into intrinsic image pixels. */
+export function previewPoint(clientX, clientY, rect, imageWidth, imageHeight) {
+  if (!imageWidth || !imageHeight || !rect.width || !rect.height) return null;
+  const scale = Math.min(rect.width / imageWidth, rect.height / imageHeight);
+  const width = imageWidth * scale;
+  const height = imageHeight * scale;
+  const left = rect.left + (rect.width - width) / 2;
+  const top = rect.top + (rect.height - height) / 2;
+  const x = (clientX - left) / width;
+  const y = (clientY - top) / height;
+  if (x < 0 || x > 1 || y < 0 || y > 1) return null;
+  return [x * imageWidth, y * imageHeight];
+}
+
 export function solveHomography(from, to) {
   if (!Array.isArray(from) || !Array.isArray(to) || from.length !== 4 || to.length !== 4) {
     throw new TypeError('Homography requires four source and destination points');

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { projectPoint, solveHomography } from '../src/geometry.js';
+import { previewPoint, projectPoint, solveHomography } from '../src/geometry.js';
 
 const closePoint = (actual, expected, epsilon = 1e-8) => {
   assert.ok(Math.abs(actual[0] - expected[0]) < epsilon, `${actual[0]} != ${expected[0]}`);
@@ -30,4 +30,11 @@ test('solveHomography rejects degenerate correspondences', () => {
 
 test('projectPoint rejects points on the projective horizon', () => {
   assert.throws(() => projectPoint([1, 0, 0, 0, 1, 0, 1, 0, 0], [0, 1]), /infinity/);
+});
+
+test('previewPoint maps contain-fitted clicks to intrinsic pixels and ignores letterboxes', () => {
+  const rect = { left: 10, top: 20, width: 200, height: 200 };
+  assert.deepEqual(previewPoint(110, 120, rect, 400, 200), [200, 100]);
+  assert.deepEqual(previewPoint(10, 70, rect, 400, 200), [0, 0]);
+  assert.equal(previewPoint(110, 40, rect, 400, 200), null);
 });

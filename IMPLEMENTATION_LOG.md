@@ -3,7 +3,7 @@
 - [x] Youtube removal
 - [x] Disk-stream videos
 - [x] Midpoint insertion
-- [ ] Camera alignment
+- [x] Camera alignment
 - [ ] SlimSAM masks
 - [ ] Ordered layers
 
@@ -46,3 +46,19 @@
 - Verification: 4 open/closed/curved path tests and production build passed.
 - Limitations: real pointer/undo verification remains in the final browser pass.
 - Intended commit: `Insert editable line vertices from persistent midpoints`
+
+## Step 4: Camera alignment
+
+- Added Camera setup with live preview, device choice, freeze/retake/start/stop,
+  and four camera clicks matching numbered projector targets. Targets appear
+  before capture. The panel never enters the clean projection stream.
+- Calibration saves normalized correspondences/dimensions/device ID, reconstructs
+  its matrix on load, and can be explicitly reused on matching camera frames.
+- Camera requests are video-only and restricted to the editor; packaged macOS
+  declares its camera usage. Closing stops tracks; stale permission requests and
+  disconnected cameras are handled. Segmentation receives frozen frames via a hook.
+- Verification: 5 geometry/letterbox tests, 3 scene migration/persistence tests,
+  syntax checks, production build, and whitespace checks passed.
+- Limitations: physical camera/projector alignment and packaged macOS permission
+  prompts require hardware verification. One plane is supported per scene.
+- Intended commit: `Add camera capture and persistent four-point calibration`
