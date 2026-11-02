@@ -195,3 +195,11 @@ not claimed as completed by automated tests or the synthetic-frame browser check
 - Documented the slider meanings in README. Verification: `npm test`, `npm run
   build`, and whitespace checks passed.
 - Intended commit: `Clarify audio controls and add input level meter`
+
+## Audio ripple visibility follow-up
+
+- Lowered the default noise threshold from 8% to 3% and added a square-root
+  response curve so ordinary speech and music produce visible ripple motion
+  without requiring excessive sensitivity. The threshold slider remains available
+  for noisy environments.
+- Intended commit: `Make ordinary audio levels visible in reactive ripples`

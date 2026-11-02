@@ -31,7 +31,10 @@ export function normalizeSignal(value, { sensitivity = 1, threshold = 0, smoothi
   const gated = Math.max(0, clamp(value) - clamp(threshold, 0, 0.95));
   const range = Math.max(0.05, 1 - clamp(threshold, 0, 0.95));
   const shaped = clamp((gated / range) * Math.max(0.1, Number(sensitivity) || 1));
-  return clamp(shaped * (1 - clamp(smoothing, 0, 0.95) * 0.18));
+  // Spectrum magnitudes from ordinary speech/music are usually small. A
+  // square-root response keeps those real signals visible without making the
+  // sensitivity slider excessively aggressive at louder levels.
+  return clamp(Math.sqrt(shaped) * (1 - clamp(smoothing, 0, 0.95) * 0.18));
 }
 
 export function normalizedPoint(origin, points) {
@@ -49,7 +52,7 @@ export function audioSettings(options = {}) {
     band: AUDIO_BANDS.includes(options.band) ? options.band : 'overall',
     sensitivity: clamp(options.sensitivity ?? 1, 0.1, 3),
     smoothing: clamp(options.smoothing ?? 0.35, 0, 0.95),
-    threshold: clamp(options.threshold ?? 0.08, 0, 0.95),
+    threshold: clamp(options.threshold ?? 0.03, 0, 0.95),
     origin: [clamp(options.origin?.[0] ?? 0.5), clamp(options.origin?.[1] ?? 0.5)],
     rippleRate: clamp(options.rippleRate ?? 1, 0.25, 3),
     rippleDecay: clamp(options.rippleDecay ?? 0.72, 0.2, 0.98),
