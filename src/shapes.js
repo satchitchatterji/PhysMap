@@ -23,7 +23,7 @@ import { warpImageToQuad } from './mapping.js';
 import { renderAnimation } from './animations.js';
 import { splitPathEdge } from './pathEditing.js';
 import { clampOpacity } from './layers.js';
-import { audioSettings, normalizeSignal, normalizedPoint, ripplePhase } from './audioReactive.js';
+import { audioSettings, normalizeSignal, normalizedPoint } from './audioReactive.js';
 
 const { Bodies, Composite, Vertices } = Matter;
 const TAU = Math.PI * 2;
@@ -374,12 +374,23 @@ function drawOutline(ctx, shape, pts, now, color, strokeWidth) {
 function drawReactiveRipples(ctx, shape, pts, now, audioLevels = null) {
   const settings = audioSettings(shape.audio);
   if (!settings.enabled || !audioLevels || shape.closed === false) return;
-  const signal = normalizeSignal(audioLevels[settings.band] || 0, settings);
-  if (signal <= 0.001) return;
+  const signal = normalizeSignal(audioLevels[settings.band] || 0, {
+    ...settings,
+    sensitivity: settings.sensitivity * settings.amplifier,
+  });
+  const previousSignal = shape._audioRippleSignal || 0;
+  shape._audioRippleSignal = signal;
+  if (!Array.isArray(shape._audioRippleBursts)) shape._audioRippleBursts = [];
+  const lastBurst = shape._audioRippleBursts[shape._audioRippleBursts.length - 1];
+  const rising = signal > 0.08 && signal > previousSignal + 0.012;
+  if (signal > 0.08 && (rising || !lastBurst || now - lastBurst.at > 260)) {
+    shape._audioRippleBursts.push({ at: now, strength: signal });
+  }
   const origin = normalizedPoint(settings.origin, pts);
   const bb = bbox(pts);
   const maxRadius = Math.max(bb.w, bb.h) * 0.78;
-  const phase = ripplePhase(signal, now, settings.rippleRate);
+  const duration = (450 + settings.rippleDecay * 1450) / Math.max(0.25, settings.rippleRate);
+  shape._audioRippleBursts = shape._audioRippleBursts.filter((burst) => now - burst.at < duration);
   ctx.save();
   tracePathShape(ctx, shape, pts);
   ctx.clip();
@@ -387,14 +398,18 @@ function drawReactiveRipples(ctx, shape, pts, now, audioLevels = null) {
   ctx.shadowColor = ctx.strokeStyle;
   ctx.lineCap = 'round';
   ctx.lineWidth = Math.max(1.2, (shape.strokeWidth || 3) * (0.7 + signal * 0.9));
-  for (let i = 0; i < 4; i++) {
-    const progress = ((phase / (Math.PI * 2)) + i * 0.25) % 1;
-    const radius = Math.max(2, progress * maxRadius);
-    ctx.globalAlpha = signal * (1 - progress) * (1 - settings.rippleDecay * 0.45) * 0.7;
+  for (const burst of shape._audioRippleBursts) {
+    const age = Math.max(0, now - burst.at) / duration;
+    for (let ring = 0; ring < 3; ring++) {
+      const progress = age - ring * 0.18;
+      if (progress <= 0 || progress >= 1) continue;
+      const radius = Math.max(2, progress * maxRadius);
+      ctx.globalAlpha = burst.strength * (1 - progress) * 0.82;
     ctx.shadowBlur = config.glow * (0.8 + signal * 1.8);
     ctx.beginPath();
     ctx.ellipse(origin.x, origin.y, radius, radius * (bb.h / Math.max(1, bb.w)), 0, 0, TAU);
     ctx.stroke();
+    }
   }
   ctx.restore();
 }

@@ -8,7 +8,6 @@ export const AUDIO_BANDS = ['bass', 'mids', 'treble', 'overall'];
 export function clamp(value, min = 0, max = 1) {
   return Math.max(min, Math.min(max, Number.isFinite(Number(value)) ? Number(value) : min));
 }
-
 export function bandAverage(data, start, end) {
   if (!data?.length) return 0;
   const from = Math.max(0, Math.min(data.length - 1, Math.floor(start)));
@@ -51,6 +50,7 @@ export function audioSettings(options = {}) {
     enabled: options.enabled === true,
     band: AUDIO_BANDS.includes(options.band) ? options.band : 'overall',
     sensitivity: clamp(options.sensitivity ?? 1, 0.1, 3),
+    amplifier: clamp(options.amplifier ?? 1, 0.25, 4),
     smoothing: clamp(options.smoothing ?? 0.35, 0, 0.95),
     threshold: clamp(options.threshold ?? 0.03, 0, 0.95),
     origin: [clamp(options.origin?.[0] ?? 0.5), clamp(options.origin?.[1] ?? 0.5)],
@@ -134,8 +134,4 @@ export class AudioReactiveController {
     this.levels = { bass: 0, mids: 0, treble: 0, overall: 0 };
     if (this.status !== 'error') this.status = 'idle';
   }
-}
-
-export function ripplePhase(signal, now, rate = 1) {
-  return (now * 0.001 * Math.max(0.25, rate) + signal * TAU) % TAU;
 }

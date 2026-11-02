@@ -203,3 +203,11 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   without requiring excessive sensitivity. The threshold slider remains available
   for noisy environments.
 - Intended commit: `Make ordinary audio levels visible in reactive ripples`
+
+## Outward-only ripple bursts and amplifier
+
+- Replaced looping rings with one-shot ripple bursts. Audio peaks now spawn rings
+  that expand monotonically from the origin, fade, and disappear without wrapping
+  back inward. Added a per-surface Amplifier control to boost the analyzed signal
+  before sensitivity and threshold processing.
+- Intended commit: `Make audio ripples expand outward and add amplifier control`

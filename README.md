@@ -146,7 +146,8 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
   Audio Reactive in Motion, choose a band, and tune sensitivity, smoothing, threshold,
   ripple rate, and decay. Drag the green origin marker in the editor to reposition
   the ripple source. The AUDIO panel's Input level bar confirms that sound is reaching
-  the analyser. Sensitivity controls response strength, smoothing calms jitter,
+  the analyser. Sensitivity controls response strength, Amplifier boosts the signal
+  before it is applied, and smoothing calms jitter,
   threshold ignores quiet sound, rate controls ring expansion, and decay controls how
   quickly rings fade. System audio depends on OS capture support and the selected share
   source; denied or unavailable capture leaves the scene rendering normally.

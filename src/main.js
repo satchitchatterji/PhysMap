@@ -2342,6 +2342,7 @@ function updateAudioControls(shape) {
   if (band) band.value = settings.band;
   for (const [id, key, format] of [
     ['props-audio-sensitivity', 'sensitivity', (v) => `${Number(v).toFixed(1)}X`],
+    ['props-audio-amplifier', 'amplifier', (v) => `${Number(v).toFixed(2)}X`],
     ['props-audio-smoothing', 'smoothing', (v) => `${Math.round(Number(v) * 100)}%`],
     ['props-audio-threshold', 'threshold', (v) => `${Math.round(Number(v) * 100)}%`],
     ['props-ripple-rate', 'rippleRate', (v) => `${Number(v).toFixed(2)}X`],
@@ -3146,6 +3147,7 @@ function wireProps() {
   });
   for (const [id, key] of [
     ['props-audio-sensitivity', 'sensitivity'],
+    ['props-audio-amplifier', 'amplifier'],
     ['props-audio-smoothing', 'smoothing'],
     ['props-audio-threshold', 'threshold'],
     ['props-ripple-rate', 'rippleRate'],

@@ -87,6 +87,7 @@ export function serialize(app) {
       enabled: s.audio.enabled === true,
       band: s.audio.band,
       sensitivity: s.audio.sensitivity,
+      amplifier: s.audio.amplifier,
       smoothing: s.audio.smoothing,
       threshold: s.audio.threshold,
       origin: Array.isArray(s.audio.origin) ? [...s.audio.origin] : [0.5, 0.5],

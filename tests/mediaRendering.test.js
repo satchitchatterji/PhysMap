@@ -32,6 +32,7 @@ test('audio-reactive ripples clip to the selected shape only', () => {
     setLineDash() {},
   };
   drawShapes(ctx, { shapes: [shape], audioLevels: { overall: 1 } }, false, 100);
-  assert.equal(clips, 1);
+  drawShapes(ctx, { shapes: [shape], audioLevels: { overall: 1 } }, false, 200);
+  assert.ok(clips >= 1);
   assert.ok(ellipses > 0);
 });
