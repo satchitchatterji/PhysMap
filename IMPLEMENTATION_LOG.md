@@ -227,3 +227,11 @@ not claimed as completed by automated tests or the synthetic-frame browser check
 - Ripple Point bursts use the same outward-only audio behavior as reactive surfaces;
   runtime burst state is excluded from scene serialization.
 - Intended commit: `Add standalone audio-reactive ripple points`
+
+## Smooth water-wave ripple style
+
+- Added a per-object ripple style selector with the existing hard `Rings` mode and
+  a softer `Water Wave` mode. Water Wave uses blurred, closely spaced sine-shaped
+  bands to create a top-down gradient-like wavefront while retaining outward-only
+  burst timing and scene persistence.
+- Intended commit: `Add smooth water-wave ripple style`

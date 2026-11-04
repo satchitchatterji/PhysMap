@@ -56,7 +56,33 @@ export function audioSettings(options = {}) {
     origin: [clamp(options.origin?.[0] ?? 0.5), clamp(options.origin?.[1] ?? 0.5)],
     rippleRate: clamp(options.rippleRate ?? 1, 0.25, 3),
     rippleDecay: clamp(options.rippleDecay ?? 0.72, 0.2, 0.98),
+    rippleStyle: options.rippleStyle === 'water' ? 'water' : 'rings',
   };
+}
+
+// A soft approximation of a top-down water wave: several closely spaced,
+// blurred bands follow the same expanding wavefront instead of reading as
+// separate hard-edged concentric circles.
+export function drawWaterWave(ctx, x, y, radius, scaleY, strength, color, maxRadius) {
+  const width = Math.max(12, Math.min(maxRadius * 0.24, 46));
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = Math.max(8, width * 0.8);
+  ctx.lineCap = 'round';
+  for (let i = -8; i <= 8; i++) {
+    const offset = (i / 8) * width;
+    const distance = radius + offset;
+    if (distance <= 1) continue;
+    const envelope = Math.max(0, 1 - Math.abs(offset) / width);
+    const sineBand = 0.35 + 0.65 * Math.pow(Math.sin((i + 8) / 16 * Math.PI), 2);
+    ctx.globalAlpha = strength * envelope * sineBand * 0.16;
+    ctx.lineWidth = Math.max(1, width * 0.12 * (0.7 + envelope));
+    ctx.beginPath();
+    ctx.ellipse(x, y, distance, distance * scaleY, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 export class AudioReactiveController {

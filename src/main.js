@@ -2329,6 +2329,7 @@ function applyAudioSetting(key, value) {
   if (key === 'enabled') current.enabled = Boolean(value);
   else if (key === 'band') current.band = value;
   else if (key === 'origin') current.origin = [Math.max(0, Math.min(1, value[0])), Math.max(0, Math.min(1, value[1]))];
+  else if (key === 'rippleStyle') current.rippleStyle = value;
   else current[key] = Number(value);
   shape.audio = audioSettings(current);
   saveCurrentProject();
@@ -2344,6 +2345,8 @@ function updateAudioControls(shape) {
   }
   const band = document.getElementById('props-audio-band');
   if (band) band.value = settings.band;
+  const rippleStyle = document.getElementById('props-ripple-style');
+  if (rippleStyle) rippleStyle.value = settings.rippleStyle;
   for (const [id, key, format] of [
     ['props-audio-sensitivity', 'sensitivity', (v) => `${Number(v).toFixed(1)}X`],
     ['props-audio-amplifier', 'amplifier', (v) => `${Number(v).toFixed(2)}X`],
@@ -2862,6 +2865,8 @@ function updateRipplePointControls(point) {
   }
   const band = document.getElementById('ripple-point-band');
   if (band) band.value = settings.band;
+  const style = document.getElementById('ripple-point-style');
+  if (style) style.value = settings.rippleStyle;
   const values = {
     amplifier: [`${Number(settings.amplifier).toFixed(2)}X`, settings.amplifier],
     threshold: [`${Math.round(settings.threshold * 100)}%`, settings.threshold],
@@ -2882,6 +2887,7 @@ function applyRipplePointSetting(key, value) {
   const settings = audioSettings(point.audio);
   if (key === 'enabled') settings.enabled = Boolean(value);
   else if (key === 'band') settings.band = value;
+  else if (key === 'rippleStyle') settings.rippleStyle = value;
   else settings[key] = Number(value);
   point.audio = audioSettings(settings);
   saveCurrentProject();
@@ -3048,6 +3054,11 @@ function wireProps() {
   document.getElementById('ripple-point-band').addEventListener('change', (event) => {
     history.checkpoint();
     applyRipplePointSetting('band', event.target.value);
+    commitSceneChange();
+  });
+  document.getElementById('ripple-point-style').addEventListener('change', (event) => {
+    history.checkpoint();
+    applyRipplePointSetting('rippleStyle', event.target.value);
     commitSceneChange();
   });
   for (const [id, key] of [
@@ -3224,6 +3235,11 @@ function wireProps() {
   document.getElementById('props-audio-band').addEventListener('change', (event) => {
     history.checkpoint();
     applyAudioSetting('band', event.target.value);
+    commitSceneChange();
+  });
+  document.getElementById('props-ripple-style').addEventListener('change', (event) => {
+    history.checkpoint();
+    applyAudioSetting('rippleStyle', event.target.value);
     commitSceneChange();
   });
   for (const [id, key] of [

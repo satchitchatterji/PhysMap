@@ -23,7 +23,7 @@ import { warpImageToQuad } from './mapping.js';
 import { renderAnimation } from './animations.js';
 import { splitPathEdge } from './pathEditing.js';
 import { clampOpacity } from './layers.js';
-import { audioSettings, normalizeSignal, normalizedPoint } from './audioReactive.js';
+import { audioSettings, drawWaterWave, normalizeSignal, normalizedPoint } from './audioReactive.js';
 
 const { Bodies, Composite, Vertices } = Matter;
 const TAU = Math.PI * 2;
@@ -404,11 +404,24 @@ function drawReactiveRipples(ctx, shape, pts, now, audioLevels = null) {
       const progress = age - ring * 0.18;
       if (progress <= 0 || progress >= 1) continue;
       const radius = Math.max(2, progress * maxRadius);
-      ctx.globalAlpha = burst.strength * (1 - progress) * 0.82;
-    ctx.shadowBlur = config.glow * (0.8 + signal * 1.8);
-    ctx.beginPath();
-    ctx.ellipse(origin.x, origin.y, radius, radius * (bb.h / Math.max(1, bb.w)), 0, 0, TAU);
-    ctx.stroke();
+      if (settings.rippleStyle === 'water') {
+        drawWaterWave(
+          ctx,
+          origin.x,
+          origin.y,
+          radius,
+          bb.h / Math.max(1, bb.w),
+          burst.strength * (1 - progress),
+          ctx.strokeStyle,
+          maxRadius,
+        );
+      } else {
+        ctx.globalAlpha = burst.strength * (1 - progress) * 0.82;
+        ctx.shadowBlur = config.glow * (0.8 + signal * 1.8);
+        ctx.beginPath();
+        ctx.ellipse(origin.x, origin.y, radius, radius * (bb.h / Math.max(1, bb.w)), 0, 0, TAU);
+        ctx.stroke();
+      }
     }
   }
   ctx.restore();

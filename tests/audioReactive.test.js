@@ -28,6 +28,8 @@ test('audio settings and ripple origins are backward-compatible and bounded', ()
   const settings = audioSettings({ enabled: true, band: 'invalid', origin: [-2, 4] });
   assert.equal(settings.band, 'overall');
   assert.deepEqual(settings.origin, [0, 1]);
+  assert.equal(audioSettings({ rippleStyle: 'water' }).rippleStyle, 'water');
+  assert.equal(audioSettings({ rippleStyle: 'unknown' }).rippleStyle, 'rings');
   assert.deepEqual(normalizedPoint([0.25, 0.75], [[10, 20], [110, 80]]), { x: 35, y: 65 });
   assert.equal(audioSettings().enabled, false);
   assert.deepEqual(audioSettings().origin, [0.5, 0.5]);
