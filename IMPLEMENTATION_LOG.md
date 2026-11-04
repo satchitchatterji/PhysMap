@@ -322,3 +322,15 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   macOS permission state still require a fresh Electron launch after this
   change.
 - Intended commit: `Add macOS system-audio capture metadata`
+
+## System capture fallback audio track
+
+- Corrected the Electron display-media fallback to request `audio: 'loopback'`
+  alongside its selected desktop source. The previous fallback returned only a
+  video source, which caused the renderer's intentional `no audio track`
+  validation error.
+- Verification: `node --check electron/main.cjs`, `npm test` (33 passed), `npm
+  run build` (passed), and `git diff --check` (passed). Real macOS loopback
+  capture remains a manual check because it depends on the current Electron
+  permission state and audio output route.
+- Intended commit: `Return loopback audio from Electron fallback`

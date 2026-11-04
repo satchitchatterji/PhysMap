@@ -293,12 +293,12 @@ function createWindow() {
   if (process.platform === 'darwin' && editorSession.setDisplayMediaRequestHandler) {
     // Electron 41 exposes the native macOS picker on macOS 15+. When
     // available, Electron bypasses the callback below and presents that picker
-    // directly. Older macOS versions fall back to a screen source and the
-    // renderer reports the absence of an audio track.
+    // directly. If Electron invokes the fallback, request loopback audio too;
+    // returning only a video source produces no audio track.
     editorSession.setDisplayMediaRequestHandler(async (_request, callback) => {
       const { desktopCapturer } = require('electron');
       const sources = await desktopCapturer.getSources({ types: ['screen', 'window'] });
-      if (sources[0]) callback({ video: sources[0] });
+      if (sources[0]) callback({ video: sources[0], audio: 'loopback' });
       else callback({});
     }, { useSystemPicker: true });
   }
