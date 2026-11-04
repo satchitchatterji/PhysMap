@@ -365,18 +365,20 @@ function drawRipplePoint(ctx, effect, now, editMode, selected, audioLevels) {
   ctx.lineWidth = selected ? 3 : 2;
   for (const burst of effect._audioRippleBursts) {
     const age = Math.max(0, now - burst.at) / duration;
+    if (settings.rippleStyle === 'water') {
+      if (age > 0 && age < 1) {
+        drawWaterWave(ctx, effect.x, effect.y, age * 170, 1, burst.strength * (1 - age), color, 170);
+      }
+      continue;
+    }
     for (let ring = 0; ring < 3; ring++) {
       const progress = age - ring * 0.18;
       if (progress <= 0 || progress >= 1) continue;
       const radius = Math.max(2, progress * 170);
-      if (settings.rippleStyle === 'water') {
-        drawWaterWave(ctx, effect.x, effect.y, radius, 1, burst.strength * (1 - progress), color, 170);
-      } else {
-        ctx.globalAlpha = burst.strength * (1 - progress) * 0.82;
-        ctx.beginPath();
-        ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+      ctx.globalAlpha = burst.strength * (1 - progress) * 0.82;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
     }
   }
   ctx.globalAlpha = editMode ? 1 : 0.9;

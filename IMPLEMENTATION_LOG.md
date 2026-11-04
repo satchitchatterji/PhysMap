@@ -235,3 +235,11 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   bands to create a top-down gradient-like wavefront while retaining outward-only
   burst timing and scene persistence.
 - Intended commit: `Add smooth water-wave ripple style`
+
+## Water-wave performance follow-up
+
+- Reduced Water Wave rendering from several nested wavefronts to one expanding
+  wavefront per burst with nine lightweight bands and a smaller glow radius. This
+  avoids multiplying blurred Canvas2D ellipse work across both editor and projector
+  canvases while preserving the smooth appearance.
+- Intended commit: `Optimize smooth water-wave rendering`

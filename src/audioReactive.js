@@ -64,14 +64,14 @@ export function audioSettings(options = {}) {
 // blurred bands follow the same expanding wavefront instead of reading as
 // separate hard-edged concentric circles.
 export function drawWaterWave(ctx, x, y, radius, scaleY, strength, color, maxRadius) {
-  const width = Math.max(12, Math.min(maxRadius * 0.24, 46));
+  const width = Math.max(10, Math.min(maxRadius * 0.2, 36));
   ctx.save();
   ctx.strokeStyle = color;
   ctx.shadowColor = color;
-  ctx.shadowBlur = Math.max(8, width * 0.8);
+  ctx.shadowBlur = Math.max(4, width * 0.35);
   ctx.lineCap = 'round';
-  for (let i = -8; i <= 8; i++) {
-    const offset = (i / 8) * width;
+  for (let i = -4; i <= 4; i++) {
+    const offset = (i / 4) * width;
     const distance = radius + offset;
     if (distance <= 1) continue;
     const envelope = Math.max(0, 1 - Math.abs(offset) / width);

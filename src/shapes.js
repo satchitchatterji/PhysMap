@@ -400,28 +400,30 @@ function drawReactiveRipples(ctx, shape, pts, now, audioLevels = null) {
   ctx.lineWidth = Math.max(1.2, (shape.strokeWidth || 3) * (0.7 + signal * 0.9));
   for (const burst of shape._audioRippleBursts) {
     const age = Math.max(0, now - burst.at) / duration;
-    for (let ring = 0; ring < 3; ring++) {
-      const progress = age - ring * 0.18;
-      if (progress <= 0 || progress >= 1) continue;
-      const radius = Math.max(2, progress * maxRadius);
-      if (settings.rippleStyle === 'water') {
+    if (settings.rippleStyle === 'water') {
+      if (age > 0 && age < 1) {
         drawWaterWave(
           ctx,
           origin.x,
           origin.y,
-          radius,
+          age * maxRadius,
           bb.h / Math.max(1, bb.w),
-          burst.strength * (1 - progress),
+          burst.strength * (1 - age),
           ctx.strokeStyle,
           maxRadius,
         );
-      } else {
-        ctx.globalAlpha = burst.strength * (1 - progress) * 0.82;
-        ctx.shadowBlur = config.glow * (0.8 + signal * 1.8);
-        ctx.beginPath();
-        ctx.ellipse(origin.x, origin.y, radius, radius * (bb.h / Math.max(1, bb.w)), 0, 0, TAU);
-        ctx.stroke();
       }
+      continue;
+    }
+    for (let ring = 0; ring < 3; ring++) {
+      const progress = age - ring * 0.18;
+      if (progress <= 0 || progress >= 1) continue;
+      const radius = Math.max(2, progress * maxRadius);
+      ctx.globalAlpha = burst.strength * (1 - progress) * 0.82;
+      ctx.shadowBlur = config.glow * (0.8 + signal * 1.8);
+      ctx.beginPath();
+      ctx.ellipse(origin.x, origin.y, radius, radius * (bb.h / Math.max(1, bb.w)), 0, 0, TAU);
+      ctx.stroke();
     }
   }
   ctx.restore();
