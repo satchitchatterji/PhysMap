@@ -307,3 +307,18 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   run build` (passed), and `git diff --check` (passed). Real macOS source
   selection and OS-level loopback routing still require a desktop check.
 - Intended commit: `Isolate selected audio source in analyser pipeline`
+
+## macOS system-audio support metadata
+
+- Added `NSAudioCaptureUsageDescription` and `NSScreenCaptureUsageDescription`
+  to packaged macOS builds. Electron's current macOS system-audio path uses
+  Core Audio Tap and requires the audio-capture usage declaration; development
+  `electron .` launches use Electron's ScreenCaptureKit fallback because the
+  un-packaged Electron binary cannot include PhysMap's Info.plist metadata.
+- System-audio errors now distinguish unsupported capture from denied/cancelled
+  permission and show an actionable message in the AUDIO panel.
+- Verification: `node --check electron/main.cjs`, `npm test` (33 passed), `npm
+  run build` (passed), and `git diff --check` (passed). The real picker and
+  macOS permission state still require a fresh Electron launch after this
+  change.
+- Intended commit: `Add macOS system-audio capture metadata`

@@ -2,6 +2,15 @@ const { app, BrowserWindow, dialog, ipcMain, protocol, screen, shell, systemPref
 const { autoUpdater } = require('electron-updater');
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
+
+// The packaged app uses Electron's Core Audio Tap path on current macOS. The
+// un-packaged `electron .` development app cannot carry our Info.plist usage
+// description, so use the older ScreenCaptureKit path there instead. This
+// keeps local Electron testing usable while packaged builds use the supported
+// Core Audio Tap implementation with its declared permission string.
+if (process.platform === 'darwin' && !app.isPackaged) {
+  app.commandLine.appendSwitch('disable-features', 'MacCatapLoopbackAudioForScreenShare');
+}
 const {
   MEDIA_SCHEME,
   VIDEO_EXTENSIONS,

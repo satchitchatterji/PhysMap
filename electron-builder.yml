@@ -20,6 +20,8 @@ mac:
   extendInfo:
     NSCameraUsageDescription: PhysMap uses your camera to align projection points and create editable surface masks.
     NSMicrophoneUsageDescription: PhysMap uses your microphone to drive audio-reactive projected visuals.
+    NSAudioCaptureUsageDescription: PhysMap captures system audio to drive audio-reactive projected visuals.
+    NSScreenCaptureUsageDescription: PhysMap captures a selected screen or app audio source for audio-reactive projected visuals.
   category: public.app-category.graphics-design
   icon: build/icon.icns
   target:

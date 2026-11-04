@@ -165,6 +165,11 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
   selected source without an audio track is reported in the AUDIO panel; denied or
   unavailable capture leaves the scene rendering normally.
 
+  For development, `npm run desktop` uses Electron's ScreenCaptureKit fallback
+  because the un-packaged Electron binary cannot carry PhysMap's macOS usage
+  metadata. Packaged builds include the system-audio usage declarations and use
+  the current Core Audio Tap path.
+
 Segmentation downloads its model on first use, then reuses the browser cache.
 Frames stay on the device. Clearing/evicting that cache requires another download.
 Alignment assumes one flat region; objects at different depths need manual edits.

@@ -112,7 +112,9 @@ export class AudioReactiveController {
         });
       }
       if (mode === 'system' || mode === 'mix') {
-        if (!navigator.mediaDevices.getDisplayMedia) throw new Error('System audio capture is unavailable.');
+        if (!navigator.mediaDevices.getDisplayMedia) {
+          throw new Error('System audio is unavailable in this Electron build. Restart with the latest Electron app build.');
+        }
         const display = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
         display.getVideoTracks().forEach((track) => track.stop());
         if (!display.getAudioTracks().length) {
@@ -151,8 +153,17 @@ export class AudioReactiveController {
     } catch (error) {
       await this.stop();
       this.status = 'error';
-      this.error = error?.message || 'Audio capture failed.';
-      throw error;
+      const name = error?.name || '';
+      if (mode === 'system' || mode === 'mix') {
+        this.error = name === 'NotSupportedError'
+          ? 'System audio is not supported by this Electron/macOS capture path. Rebuild the app and grant Screen & System Audio Recording permission.'
+          : name === 'NotAllowedError'
+            ? 'System audio permission was denied or the picker was cancelled.'
+            : error?.message || 'System audio capture failed.';
+      } else {
+        this.error = error?.message || 'Audio capture failed.';
+      }
+      throw new Error(this.error, { cause: error });
     }
   }
 
