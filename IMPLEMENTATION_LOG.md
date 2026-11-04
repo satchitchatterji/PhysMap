@@ -243,3 +243,10 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   avoids multiplying blurred Canvas2D ellipse work across both editor and projector
   canvases while preserving the smooth appearance.
 - Intended commit: `Optimize smooth water-wave rendering`
+
+## Ripple color controls
+
+- Standalone Ripple Points now expose preset swatches and a custom color picker.
+  The selected color applies to both the point marker and emitted waves; mapped
+  surfaces continue to use their existing surface color control.
+- Intended commit: `Add color controls for ripple points`

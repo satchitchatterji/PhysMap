@@ -3880,6 +3880,15 @@
           </select>
           <div class="props-label">Ripple style</div>
           <select id="ripple-point-style" aria-label="Ripple point style"><option value="rings">Rings</option><option value="water">Water Wave</option></select>
+          <div class="props-label">Color</div>
+          <div class="physics-colors">
+            <button data-ripple-point-color="#b4e89c" style="background:#b4e89c" title="Mint"></button>
+            <button data-ripple-point-color="#35d7ff" style="background:#35d7ff" title="Cyan"></button>
+            <button data-ripple-point-color="#ffcc4d" style="background:#ffcc4d" title="Gold"></button>
+            <button data-ripple-point-color="#ff5f71" style="background:#ff5f71" title="Red"></button>
+            <button data-ripple-point-color="#8c7dff" style="background:#8c7dff" title="Violet"></button>
+            <input type="color" id="ripple-point-color" title="Custom ripple point color" />
+          </div>
           <div class="props-label">Amplifier <span class="props-help">Boosts the audio signal</span></div>
           <div class="props-row range-row"><input type="range" id="ripple-point-amplifier" min="0.25" max="4" step="0.25" value="1" /><output class="range-value" id="ripple-point-amplifier-value">1.00X</output></div>
           <div class="props-label">Threshold <span class="props-help">Ignores quiet sound</span></div>

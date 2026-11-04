@@ -105,7 +105,9 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
 - **Ripple Point objects** &mdash; place a standalone audio-reactive point anywhere on
   the stage. Select it to edit its audio band, amplifier, threshold, rate, and decay;
   choose Ripple Point again and drag an existing point to move it. Choose Rings or
-  the softer Water Wave style for the ripple appearance.
+  the softer Water Wave style for the ripple appearance, and use its Color control
+  to recolor the point and waves together. Surface ripples inherit their surface’s
+  existing Color control.
 - **Project hub** &mdash; animated startup, autosaved current project, and a library
   of named projects you can reopen any time.
 - **Undo / Redo** with a deep history, and **Export / Import** scenes as `.json`.

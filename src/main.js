@@ -2858,6 +2858,8 @@ function selectedRipplePoint() {
 
 function updateRipplePointControls(point) {
   const settings = audioSettings(point?.audio);
+  const colorInput = document.getElementById('ripple-point-color');
+  if (colorInput && /^#[0-9a-f]{6}$/i.test(point?.color || '')) colorInput.value = point.color;
   const enabled = document.getElementById('ripple-point-enabled');
   if (enabled) {
     enabled.textContent = settings.enabled ? 'Audio Reactive On' : 'Audio Reactive Off';
@@ -2890,6 +2892,14 @@ function applyRipplePointSetting(key, value) {
   else if (key === 'rippleStyle') settings.rippleStyle = value;
   else settings[key] = Number(value);
   point.audio = audioSettings(settings);
+  saveCurrentProject();
+  updateRipplePointControls(point);
+}
+
+function applyRipplePointColor(color) {
+  const point = selectedRipplePoint();
+  if (!point || !/^#[0-9a-f]{6}$/i.test(color)) return;
+  point.color = color;
   saveCurrentProject();
   updateRipplePointControls(point);
 }
@@ -3060,6 +3070,16 @@ function wireProps() {
     history.checkpoint();
     applyRipplePointSetting('rippleStyle', event.target.value);
     commitSceneChange();
+  });
+  document.querySelectorAll('[data-ripple-point-color]').forEach((button) => {
+    button.addEventListener('click', () => {
+      history.checkpoint();
+      applyRipplePointColor(button.dataset.ripplePointColor);
+      commitSceneChange();
+    });
+  });
+  document.getElementById('ripple-point-color').addEventListener('input', (event) => {
+    applyRipplePointColor(event.target.value);
   });
   for (const [id, key] of [
     ['ripple-point-amplifier', 'amplifier'],
