@@ -276,3 +276,18 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   --check` (passed). Hardware audio capture was not required for this renderer
   and pointer-state regression check.
 - Intended commit: `Fix Ripple Point audio toggle and Select-tool dragging`
+
+## macOS Electron system-audio capture
+
+- Electron now permits the editor's `display-capture` request and opts into the
+  native macOS display picker when available. This is required for
+  `getDisplayMedia({ audio: true, video: true })` to return a system-audio track
+  in Electron; the existing media permission checks for microphone and camera
+  remain restricted to the editor window.
+- README now documents macOS 15+ picker behavior and the Screen & System Audio
+  Recording permission. Older macOS fallback behavior remains visible as a
+  no-audio-track error rather than silently starting a dead analyser.
+- Verification: `node --check electron/main.cjs`, `npm test` (32 passed), `npm run
+  build` (passed), and `git diff --check` (passed). A real system-audio picker
+  check still requires the user's macOS desktop session and selected source.
+- Intended commit: `Enable macOS Electron system-audio picker`

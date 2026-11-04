@@ -155,8 +155,13 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
   the analyser. Sensitivity controls response strength, Amplifier boosts the signal
   before it is applied, and smoothing calms jitter,
   threshold ignores quiet sound, rate controls ring expansion, and decay controls how
-  quickly rings fade. System audio depends on OS capture support and the selected share
-  source; denied or unavailable capture leaves the scene rendering normally.
+  quickly rings fade. In the Electron app on macOS 15+, choose System audio and press
+  Start Audio; Electron opens the native macOS screen/app picker. Select a source with
+  audio enabled and allow PhysMap under System Settings > Privacy & Security > Screen
+  & System Audio Recording. Mixed input also needs Microphone permission. System audio
+  is not available on older macOS versions through Electron's fallback path, and a
+  selected source without an audio track is reported in the AUDIO panel; denied or
+  unavailable capture leaves the scene rendering normally.
 
 Segmentation downloads its model on first use, then reuses the browser cache.
 Frames stay on the device. Clearing/evicting that cache requires another download.

@@ -249,10 +249,19 @@ function createWindow() {
 
   const editorSession = mainWindow.webContents.session;
   editorSession.setPermissionCheckHandler((contents, permission, _origin, details) => (
-    contents === mainWindow?.webContents && permission === 'media'
-      && ['audio', 'video', 'unknown'].includes(details.mediaType)
+    contents === mainWindow?.webContents && (
+      permission === 'display-capture'
+      || (permission === 'media' && ['audio', 'video', 'unknown'].includes(details.mediaType))
+    )
   ));
   editorSession.setPermissionRequestHandler(async (contents, permission, callback, details) => {
+    if (contents === mainWindow?.webContents && permission === 'display-capture') {
+      // On macOS 15+, Electron's native picker is responsible for source and
+      // Screen & System Audio Recording consent. Do not reject it before the
+      // picker can show.
+      callback(true);
+      return;
+    }
     const mediaTypes = Array.isArray(details.mediaTypes) && details.mediaTypes.length
       ? details.mediaTypes
       : ['audio'];
@@ -272,6 +281,18 @@ function createWindow() {
       callback(cameraAllowed && microphoneAllowed);
     } catch { callback(false); }
   });
+  if (process.platform === 'darwin' && editorSession.setDisplayMediaRequestHandler) {
+    // Electron 41 exposes the native macOS picker on macOS 15+. When
+    // available, Electron bypasses the callback below and presents that picker
+    // directly. Older macOS versions fall back to a screen source and the
+    // renderer reports the absence of an audio track.
+    editorSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+      const { desktopCapturer } = require('electron');
+      const sources = await desktopCapturer.getSources({ types: ['screen', 'window'] });
+      if (sources[0]) callback({ video: sources[0] });
+      else callback({});
+    }, { useSystemPicker: true });
+  }
   mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
 
   mainWindow.webContents.setWindowOpenHandler(({ url, frameName = '' }) => {
