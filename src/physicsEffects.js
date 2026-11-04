@@ -342,6 +342,25 @@ function drawPortal(ctx, effect, now, editMode, selected) {
 
 function drawRipplePoint(ctx, effect, now, editMode, selected, audioLevels) {
   const settings = audioSettings(effect.audio);
+  const color = effect.color || EFFECT_COLORS.ripplePoint;
+
+  // The point marker remains visible in the editor when disabled, but no
+  // existing burst may continue to render or be retriggered after the toggle
+  // is turned off.
+  if (!settings.enabled) {
+    effect._audioRippleSignal = 0;
+    effect._audioRippleBursts = [];
+    ctx.save();
+    ctx.globalAlpha = editMode ? 1 : 0.9;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(effect.x, effect.y, selected ? 8 : 6, 0, Math.PI * 2);
+    ctx.fill();
+    if (editMode) drawLabel(ctx, 'RIPPLE POINT', effect.x, effect.y - 24, color);
+    ctx.restore();
+    return;
+  }
+
   const signal = normalizeSignal(audioLevels?.[settings.band] || 0, {
     ...settings,
     sensitivity: settings.sensitivity * settings.amplifier,
@@ -355,7 +374,6 @@ function drawRipplePoint(ctx, effect, now, editMode, selected, audioLevels) {
     effect._audioRippleBursts.push({ at: now, strength: signal });
   }
 
-  const color = effect.color || EFFECT_COLORS.ripplePoint;
   const duration = (450 + settings.rippleDecay * 1450) / Math.max(0.25, settings.rippleRate);
   effect._audioRippleBursts = effect._audioRippleBursts.filter((burst) => now - burst.at < duration);
   ctx.save();
@@ -413,7 +431,7 @@ export function effectDefaults(type, data) {
       x: data.x,
       y: data.y,
       color: EFFECT_COLORS.ripplePoint,
-      audio: { enabled: true, band: 'overall', sensitivity: 1, amplifier: 1, smoothing: 0.35, threshold: 0.03, rippleRate: 1, rippleDecay: 0.72 },
+      audio: { enabled: false, band: 'overall', sensitivity: 1, amplifier: 1, smoothing: 0.35, threshold: 0.03, rippleRate: 1, rippleDecay: 0.72 },
     };
   }
   if (['attractor', 'repulsor', 'vortex'].includes(type)) {

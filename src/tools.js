@@ -42,6 +42,7 @@ export function initTools(canvas, app, hooks = {}) {
   let startY = 0;
   let editingEmitterId = null;
   let editingRipplePointId = null;
+  let ripplePointMoved = false;
 
   // Convert a pointer event to canvas-space (CSS pixel) coordinates. Because
   // we draw in CSS pixels (the context is DPR-scaled in main.js), the offset
@@ -93,6 +94,21 @@ export function initTools(canvas, app, hooks = {}) {
 
     if (app.tool === 'select') {
       const hit = physicsAt(p.x, p.y);
+      const hitPoint = hit?.type === 'effect'
+        ? app.effects.find((effect) => effect.id === hit.id && effect.type === 'ripplePoint')
+        : null;
+      if (hitPoint && !hitPoint.locked) {
+        down = true;
+        editingRipplePointId = hitPoint.id;
+        ripplePointMoved = false;
+        beforeChange();
+        app.selectedShapeId = null;
+        app.selectedPhysics = hit;
+        onSelect();
+        canvas.setPointerCapture?.(e.pointerId);
+        e.stopImmediatePropagation();
+        return;
+      }
       app.selectedPhysics = hit;
       if (hit) {
         app.selectedShapeId = null;
@@ -108,6 +124,7 @@ export function initTools(canvas, app, hooks = {}) {
     down = true;
     editingEmitterId = null;
     editingRipplePointId = null;
+    ripplePointMoved = false;
     startX = p.x;
     startY = p.y;
     canvas.setPointerCapture?.(e.pointerId);
@@ -228,9 +245,10 @@ export function initTools(canvas, app, hooks = {}) {
         y2: p.y,
         kind: app.particleKind,
       };
-    } else if (app.tool === 'ripplePoint' && editingRipplePointId != null) {
+    } else if (['ripplePoint', 'select'].includes(app.tool) && editingRipplePointId != null) {
       const point = app.effects.find((effect) => effect.id === editingRipplePointId);
       if (point) {
+        ripplePointMoved = true;
         point.x = p.x;
         point.y = p.y;
       }
@@ -298,13 +316,15 @@ export function initTools(canvas, app, hooks = {}) {
       }
       onChange();
       onSelect();
-    } else if (app.tool === 'ripplePoint' && editingRipplePointId != null) {
+    } else if (['ripplePoint', 'select'].includes(app.tool) && editingRipplePointId != null) {
       const point = app.effects.find((effect) => effect.id === editingRipplePointId);
       if (point) {
         point.x = p.x;
         point.y = p.y;
-        onChange();
-        onSelect();
+        if (ripplePointMoved) {
+          onChange();
+          onSelect();
+        }
       }
     } else if (['colorGate', 'boostGate', 'portal'].includes(app.tool)) {
       const length = Math.hypot(p.x - startX, p.y - startY);
@@ -326,6 +346,7 @@ export function initTools(canvas, app, hooks = {}) {
     preview = null;
     editingEmitterId = null;
     editingRipplePointId = null;
+    ripplePointMoved = false;
     canvas.releasePointerCapture?.(e.pointerId);
   }
 

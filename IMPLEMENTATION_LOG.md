@@ -263,3 +263,16 @@ not claimed as completed by automated tests or the synthetic-frame browser check
 - Electron hardware permission and packaged-app checks remain platform-dependent
   and were not rerun for this UI-only fix.
 - Intended commit: `Fix audio-reactive inspector toggle state`
+
+## Ripple Point toggle and movement correction
+
+- Ripple Point rendering now honors `audio.enabled`; disabling a point clears
+  pending runtime bursts and leaves only its editor/projector marker visible.
+  Newly created Ripple Points now default to audio-reactive Off, matching the
+  opt-in behavior of mapped surfaces.
+- Existing Ripple Points can now be dragged with the normal Select tool as well
+  as the Ripple Point tool. Locked points remain immovable.
+- Verification: `npm test` (32 passed), `npm run build` (passed), and `git diff
+  --check` (passed). Hardware audio capture was not required for this renderer
+  and pointer-state regression check.
+- Intended commit: `Fix Ripple Point audio toggle and Select-tool dragging`

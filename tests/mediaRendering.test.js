@@ -39,7 +39,7 @@ test('audio-reactive ripples clip to the selected shape only', () => {
 });
 
 test('standalone ripple points emit outward audio bursts', () => {
-  const point = { ...effectDefaults('ripplePoint', { x: 20, y: 20 }), id: 1 };
+  const point = { ...effectDefaults('ripplePoint', { x: 20, y: 20 }), id: 1, audio: { ...effectDefaults('ripplePoint', { x: 20, y: 20 }).audio, enabled: true } };
   let arcs = 0;
   const ctx = {
     save() {}, restore() {}, beginPath() {}, arc() { arcs++; }, stroke() {}, fill() {},
@@ -47,4 +47,16 @@ test('standalone ripple points emit outward audio bursts', () => {
   drawPhysicsEffects(ctx, [point], 100, false, null, { overall: 1 });
   drawPhysicsEffects(ctx, [point], 200, false, null, { overall: 1 });
   assert.ok(arcs >= 2);
+});
+
+test('disabled ripple points clear old bursts and do not react', () => {
+  const point = { ...effectDefaults('ripplePoint', { x: 20, y: 20 }), id: 2 };
+  point._audioRippleBursts = [{ at: 0, strength: 1 }];
+  let arcs = 0;
+  const ctx = {
+    save() {}, restore() {}, beginPath() {}, arc() { arcs++; }, stroke() {}, fill() {},
+  };
+  drawPhysicsEffects(ctx, [point], 100, false, null, { overall: 1 });
+  assert.equal(arcs, 1);
+  assert.deepEqual(point._audioRippleBursts, []);
 });
