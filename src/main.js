@@ -830,10 +830,21 @@ function drawScene(targetCtx, editMode, now) {
   }
   renderWorld(targetCtx, allBodies(), editMode);
   drawDrawings(targetCtx, app.drawings);
+  const backRipplePoints = app.effects.filter((effect) => (
+    effect.type === 'ripplePoint' && effect.layer === 'back'
+  ));
+  drawPhysicsEffects(
+    targetCtx,
+    backRipplePoints,
+    now,
+    editMode,
+    app.selectedPhysics?.type === 'effect' ? app.selectedPhysics.id : null,
+    app.audioLevels,
+  );
   drawShapes(targetCtx, app, editMode, now);
   drawPhysicsEffects(
     targetCtx,
-    app.effects,
+    app.effects.filter((effect) => !(effect.type === 'ripplePoint' && effect.layer === 'back')),
     now,
     editMode,
     app.selectedPhysics?.type === 'effect' ? app.selectedPhysics.id : null,
@@ -1004,10 +1015,25 @@ function drawProjectionFrame(targetCtx, now) {
     targetCtx.restore();
     return;
   }
-  // Shapes are the projected content; draw them first, then the visual-mode
-  // layer (falling particles in 'physics', or the facade eyes in 'eyes').
+  // Back-layer ripple points sit behind mapped surfaces; normal physics and
+  // front-layer points remain above them.
+  drawPhysicsEffects(
+    targetCtx,
+    app.effects.filter((effect) => effect.type === 'ripplePoint' && effect.layer === 'back'),
+    now,
+    false,
+    null,
+    app.audioLevels,
+  );
   drawShapes(targetCtx, app, false, now);
-  drawPhysicsEffects(targetCtx, app.effects, now, false, null, app.audioLevels);
+  drawPhysicsEffects(
+    targetCtx,
+    app.effects.filter((effect) => !(effect.type === 'ripplePoint' && effect.layer === 'back')),
+    now,
+    false,
+    null,
+    app.audioLevels,
+  );
   renderProjection(targetCtx, allBodies(), {
     visualMode: app.visualMode,
     eyeStyle: app.eyeStyle,
@@ -2662,8 +2688,10 @@ function openObjectContextMenu(selectionType, item, event) {
   if (!menu || !item) return;
   document.getElementById('shape-context-title').textContent = sceneObjectName(selectionType, item);
   document.getElementById('shape-context-lock').textContent = item.locked ? 'Unlock Object' : 'Lock Object';
-  document.getElementById('object-context-front').hidden = selectionType !== 'shape';
-  document.getElementById('object-context-back').hidden = selectionType !== 'shape';
+  const canReorder = selectionType === 'shape'
+    || (selectionType === 'effect' && item.type === 'ripplePoint');
+  document.getElementById('object-context-front').hidden = !canReorder;
+  document.getElementById('object-context-back').hidden = !canReorder;
   menu.classList.add('open');
 
   const margin = 10;
@@ -2693,6 +2721,28 @@ function reorderSelectedShape(action) {
   flash(action === 'front' ? 'Shape brought to front' : 'Shape sent to back');
 }
 
+function reorderSelectedRipplePoint(action) {
+  const selected = getSelectedSceneObject();
+  if (selected?.selectionType !== 'effect' || selected.item.type !== 'ripplePoint') return;
+  const point = selected.item;
+  const index = app.effects.findIndex((item) => item.id === point.id);
+  if (index < 0) return;
+  const destination = action === 'front' ? app.effects.length - 1 : 0;
+  const alreadyAtBoundary = index === destination && (
+    action === 'front' ? point.layer !== 'back' : point.layer === 'back'
+  );
+  if (alreadyAtBoundary) {
+    flash(action === 'front' ? 'Ripple Point is already in front' : 'Ripple Point is already at the back');
+    return;
+  }
+  history.checkpoint();
+  app.effects.splice(index, 1);
+  app.effects.splice(destination, 0, point);
+  point.layer = action === 'back' ? 'back' : 'front';
+  commitSceneChange();
+  flash(action === 'front' ? 'Ripple Point brought to front' : 'Ripple Point sent to back');
+}
+
 function wireShapeContextMenu() {
   const menu = document.getElementById('shape-context-menu');
   menu.addEventListener('click', (event) => {
@@ -2711,9 +2761,11 @@ function wireShapeContextMenu() {
     } else if (action === 'duplicate') {
       duplicateSelected();
     } else if (action === 'front') {
-      reorderSelectedShape('front');
+      if (selectionType === 'shape') reorderSelectedShape('front');
+      else reorderSelectedRipplePoint('front');
     } else if (action === 'back') {
-      reorderSelectedShape('back');
+      if (selectionType === 'shape') reorderSelectedShape('back');
+      else reorderSelectedRipplePoint('back');
     } else if (action === 'lock') {
       history.checkpoint();
       item.locked = !item.locked;

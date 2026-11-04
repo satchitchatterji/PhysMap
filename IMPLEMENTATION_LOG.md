@@ -349,3 +349,16 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   before producing the app bundle in this environment and was cancelled; a real
   packaged macOS picker test remains outstanding.
 - Intended commit: `Require packaged macOS app for system audio`
+
+## Ripple Point layer ordering
+
+- Ripple Points now expose Bring to Front and Send to Back in the object context
+  menu. Their persisted layer state controls whether the point is rendered above
+  or below mapped surfaces in both the editor and clean projector output.
+- Existing points default to the previous front-rendered behavior because
+  missing layer data is treated as front. Other physics effects keep their
+  existing rendering pass and ordering.
+- Verification: `npm test` (33 passed), `npm run build` (passed), and `git diff
+  --check` (passed). Manual visual overlap verification remains available in the
+  editor with a point placed over a surface.
+- Intended commit: `Make Ripple Points obey front/back layer actions`
