@@ -291,3 +291,19 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   build` (passed), and `git diff --check` (passed). A real system-audio picker
   check still requires the user's macOS desktop session and selected source.
 - Intended commit: `Enable macOS Electron system-audio picker`
+
+## Audio source pipeline isolation
+
+- Fixed a source-selection mismatch where the dropdown could change to System
+  audio while an already-running microphone graph remained connected. The input
+  selector is now locked during capture and the active status identifies the
+  source graph, for example `system audio (1 track)` or `microphone + system
+  audio`.
+- The analyser now receives an audio-only `MediaStream` for each requested
+  source, and system-only capture has an automated fake-stream check proving it
+  never requests microphone audio. Stream cleanup remains applied to the
+  original acquired tracks.
+- Verification: `node --check electron/main.cjs`, `npm test` (33 passed), `npm
+  run build` (passed), and `git diff --check` (passed). Real macOS source
+  selection and OS-level loopback routing still require a desktop check.
+- Intended commit: `Isolate selected audio source in analyser pipeline`

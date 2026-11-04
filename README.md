@@ -158,7 +158,9 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
   quickly rings fade. In the Electron app on macOS 15+, choose System audio and press
   Start Audio; Electron opens the native macOS screen/app picker. Select a source with
   audio enabled and allow PhysMap under System Settings > Privacy & Security > Screen
-  & System Audio Recording. Mixed input also needs Microphone permission. System audio
+  & System Audio Recording. The input selector is locked while capture is live so the
+  displayed source cannot differ from the active analyser graph; stop audio before
+  switching sources. Mixed input also needs Microphone permission. System audio
   is not available on older macOS versions through Electron's fallback path, and a
   selected source without an audio track is reported in the AUDIO panel; denied or
   unavailable capture leaves the scene rendering normally.

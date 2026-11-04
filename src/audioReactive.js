@@ -95,6 +95,8 @@ export class AudioReactiveController {
     this.levels = { bass: 0, mids: 0, treble: 0, overall: 0 };
     this.status = 'idle';
     this.error = '';
+    this.mode = null;
+    this.captureInfo = [];
   }
 
   async start(mode = 'microphone') {
@@ -104,7 +106,10 @@ export class AudioReactiveController {
     try {
       const streams = [];
       if (mode === 'microphone' || mode === 'mix') {
-        streams.push(await navigator.mediaDevices.getUserMedia({ audio: true, video: false }));
+        streams.push({
+          kind: 'microphone',
+          stream: await navigator.mediaDevices.getUserMedia({ audio: true, video: false }),
+        });
       }
       if (mode === 'system' || mode === 'mix') {
         if (!navigator.mediaDevices.getDisplayMedia) throw new Error('System audio capture is unavailable.');
@@ -114,7 +119,7 @@ export class AudioReactiveController {
           display.getTracks().forEach((track) => track.stop());
           throw new Error('The selected display did not provide an audio track.');
         }
-        streams.push(display);
+        streams.push({ kind: 'system', stream: display });
       }
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) throw new Error('Web Audio is unavailable in this environment.');
@@ -123,13 +128,24 @@ export class AudioReactiveController {
       this.analyser.fftSize = 1024;
       this.analyser.smoothingTimeConstant = 0.72;
       this.data = new Uint8Array(this.analyser.frequencyBinCount);
-      for (const stream of streams) {
-        const source = this.audioContext.createMediaStreamSource(stream);
+      for (const { kind, stream } of streams) {
+        // Feed audio tracks only to the analyser. The display stream can still
+        // contain a temporary video track on some Electron builds.
+        const audioStream = new MediaStream(stream.getAudioTracks());
+        const source = this.audioContext.createMediaStreamSource(audioStream);
         source.connect(this.analyser);
         this.sources.push(source);
         this.streams.push(stream);
+        this.captureInfo.push({
+          kind,
+          tracks: stream.getAudioTracks().map((track) => ({
+            label: track.label || 'Audio track',
+            readyState: track.readyState,
+          })),
+        });
       }
       await this.audioContext.resume();
+      this.mode = mode;
       this.status = 'live';
       this.error = '';
     } catch (error) {
@@ -148,6 +164,15 @@ export class AudioReactiveController {
     return this.levels;
   }
 
+  describeCapture() {
+    if (this.status !== 'live') return '';
+    const modes = this.captureInfo.map(({ kind, tracks }) => {
+      const label = kind === 'microphone' ? 'microphone' : 'system audio';
+      return `${label} (${tracks.length} track${tracks.length === 1 ? '' : 's'})`;
+    });
+    return modes.join(' + ') || this.mode || 'audio';
+  }
+
   async stop() {
     this.sources.forEach((source) => source.disconnect());
     this.streams.forEach((stream) => stream.getTracks().forEach((track) => track.stop()));
@@ -157,6 +182,8 @@ export class AudioReactiveController {
     this.audioContext = null;
     this.analyser = null;
     this.data = null;
+    this.mode = null;
+    this.captureInfo = [];
     this.levels = { bass: 0, mids: 0, treble: 0, overall: 0 };
     if (this.status !== 'error') this.status = 'idle';
   }

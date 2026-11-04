@@ -1569,6 +1569,7 @@ function wireToolbar() {
   const audioPanel = document.getElementById('audio-panel');
   const audioStatus = document.getElementById('audio-status');
   const audioToggle = document.getElementById('audio-toggle');
+  const audioSource = document.getElementById('audio-source');
   document.getElementById('btn-audio').addEventListener('click', () => audioPanel.classList.toggle('open'));
   document.getElementById('audio-close').addEventListener('click', () => audioPanel.classList.remove('open'));
   audioToggle.addEventListener('click', async () => {
@@ -1576,16 +1577,19 @@ function wireToolbar() {
       await audioReactive.stop();
       audioStatus.textContent = 'Audio is off';
       audioToggle.textContent = 'Start Audio';
+      audioSource.disabled = false;
       return;
     }
     try {
       audioStatus.textContent = 'Requesting audio permission...';
+      audioSource.disabled = true;
       await audioReactive.start(document.getElementById('audio-source').value);
-      audioStatus.textContent = 'Audio live';
+      audioStatus.textContent = `Audio live · ${audioReactive.describeCapture()}`;
       audioToggle.textContent = 'Stop Audio';
     } catch (error) {
       audioStatus.textContent = audioReactive.error || error?.message || 'Audio unavailable';
       audioToggle.textContent = 'Start Audio';
+      audioSource.disabled = false;
     }
   });
   document.getElementById('output-close').addEventListener('click', () => {
