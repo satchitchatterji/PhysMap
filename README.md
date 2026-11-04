@@ -165,10 +165,13 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
   selected source without an audio track is reported in the AUDIO panel; denied or
   unavailable capture leaves the scene rendering normally.
 
-  For development, `npm run desktop` uses Electron's ScreenCaptureKit fallback
-  because the un-packaged Electron binary cannot carry PhysMap's macOS usage
-  metadata. Packaged builds include the system-audio usage declarations and use
-  the current Core Audio Tap path.
+  On macOS, system audio must be tested from a packaged app because macOS
+  attributes Core Audio Tap permission to the responsible app bundle. Build one
+  with `npm run desktop:mac`, then open the generated `release/mac-*/PhysMap.app`
+  and grant that app Screen & System Audio Recording permission. The plain
+  `npm run desktop` development launch may capture the screen but cannot reliably
+  receive system audio because its parent Electron/terminal bundle does not carry
+  PhysMap's macOS usage metadata.
 
 Segmentation downloads its model on first use, then reuses the browser cache.
 Frames stay on the device. Clearing/evicting that cache requires another download.

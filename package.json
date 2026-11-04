@@ -19,6 +19,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "desktop": "npm run build && electron .",
+    "desktop:mac": "npm run build && npm run icons && electron-builder --mac dir",
     "icons": "node scripts/generate-icons.mjs",
     "pack": "npm run build && npm run icons && electron-builder --dir",
     "dist": "npm run build && npm run icons && electron-builder",

@@ -334,3 +334,18 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   capture remains a manual check because it depends on the current Electron
   permission state and audio output route.
 - Intended commit: `Return loopback audio from Electron fallback`
+
+## macOS packaged-app requirement
+
+- Electron's macOS Core Audio Tap permission is attributed to the responsible
+  app bundle. The development `electron .` process cannot carry PhysMap's
+  `Info.plist` usage metadata, so the README and package scripts now direct
+  system-audio testing through `npm run desktop:mac` and the generated app.
+- Audio tracks in the ended state are now rejected with a permission-specific
+  message instead of being treated as a live system source.
+- Verification: `node --check electron/main.cjs`, `npm test` (33 passed), `npm
+  run build` (passed), and `git diff --check` (passed). A local
+  `npm run desktop:mac` packaging attempt reached Electron packaging but stalled
+  before producing the app bundle in this environment and was cancelled; a real
+  packaged macOS picker test remains outstanding.
+- Intended commit: `Require packaged macOS app for system audio`

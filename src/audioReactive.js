@@ -117,9 +117,10 @@ export class AudioReactiveController {
         }
         const display = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
         display.getVideoTracks().forEach((track) => track.stop());
-        if (!display.getAudioTracks().length) {
+        const audioTracks = display.getAudioTracks();
+        if (!audioTracks.length || audioTracks.every((track) => track.readyState === 'ended')) {
           display.getTracks().forEach((track) => track.stop());
-          throw new Error('The selected display did not provide an audio track.');
+          throw new Error('The selected display did not provide a usable audio track. Grant Screen & System Audio Recording to the packaged PhysMap app, then restart it.');
         }
         streams.push({ kind: 'system', stream: display });
       }
