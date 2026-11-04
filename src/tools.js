@@ -41,6 +41,7 @@ export function initTools(canvas, app, hooks = {}) {
   let startX = 0;
   let startY = 0;
   let editingEmitterId = null;
+  let editingRipplePointId = null;
 
   // Convert a pointer event to canvas-space (CSS pixel) coordinates. Because
   // we draw in CSS pixels (the context is DPR-scaled in main.js), the offset
@@ -106,6 +107,7 @@ export function initTools(canvas, app, hooks = {}) {
 
     down = true;
     editingEmitterId = null;
+    editingRipplePointId = null;
     startX = p.x;
     startY = p.y;
     canvas.setPointerCapture?.(e.pointerId);
@@ -125,6 +127,31 @@ export function initTools(canvas, app, hooks = {}) {
       onSelect();
       down = false;
       canvas.releasePointerCapture?.(e.pointerId);
+    } else if (app.tool === 'ripplePoint') {
+      const existing = app.effects.find((effect) => (
+        effect.type === 'ripplePoint' && Math.hypot(effect.x - p.x, effect.y - p.y) <= 24
+      ));
+      if (existing) {
+        if (existing.locked) {
+          down = false;
+          canvas.releasePointerCapture?.(e.pointerId);
+          return;
+        }
+        editingRipplePointId = existing.id;
+        beforeChange();
+        app.selectedShapeId = null;
+        app.selectedPhysics = { type: 'effect', id: existing.id };
+        onSelect();
+      } else {
+        beforeChange();
+        const point = app.addEffect(effectDefaults('ripplePoint', p));
+        app.selectedShapeId = null;
+        app.selectedPhysics = { type: 'effect', id: point.id };
+        onChange();
+        onSelect();
+        down = false;
+        canvas.releasePointerCapture?.(e.pointerId);
+      }
     } else if (app.tool === 'draw') {
       preview = {
         type: 'draw',
@@ -201,6 +228,12 @@ export function initTools(canvas, app, hooks = {}) {
         y2: p.y,
         kind: app.particleKind,
       };
+    } else if (app.tool === 'ripplePoint' && editingRipplePointId != null) {
+      const point = app.effects.find((effect) => effect.id === editingRipplePointId);
+      if (point) {
+        point.x = p.x;
+        point.y = p.y;
+      }
     } else if (['colorGate', 'boostGate', 'portal'].includes(app.tool)) {
       preview = { type: app.tool, ax: startX, ay: startY, bx: p.x, by: p.y };
     }
@@ -265,6 +298,14 @@ export function initTools(canvas, app, hooks = {}) {
       }
       onChange();
       onSelect();
+    } else if (app.tool === 'ripplePoint' && editingRipplePointId != null) {
+      const point = app.effects.find((effect) => effect.id === editingRipplePointId);
+      if (point) {
+        point.x = p.x;
+        point.y = p.y;
+        onChange();
+        onSelect();
+      }
     } else if (['colorGate', 'boostGate', 'portal'].includes(app.tool)) {
       const length = Math.hypot(p.x - startX, p.y - startY);
       if (length >= config.minEffectSize) {
@@ -284,6 +325,7 @@ export function initTools(canvas, app, hooks = {}) {
 
     preview = null;
     editingEmitterId = null;
+    editingRipplePointId = null;
     canvas.releasePointerCapture?.(e.pointerId);
   }
 

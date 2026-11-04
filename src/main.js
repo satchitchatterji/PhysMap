@@ -430,6 +430,7 @@ const app = {
       colorGate: 'Color Gate',
       boostGate: 'Boost Gate',
       portal: 'Portal',
+      ripplePoint: 'Ripple Point',
     }[effect.type] || 'Effect';
     const next = {
       ...effect,
@@ -458,6 +459,7 @@ const app = {
             colorGate: 'Color Gate',
             boostGate: 'Boost Gate',
             portal: 'Portal',
+            ripplePoint: 'Ripple Point',
           }[effect.type] || 'Effect';
           const next = {
             ...effect,
@@ -835,6 +837,7 @@ function drawScene(targetCtx, editMode, now) {
     now,
     editMode,
     app.selectedPhysics?.type === 'effect' ? app.selectedPhysics.id : null,
+    app.audioLevels,
   );
   if (editMode) {
     for (const e of app.emitters) {
@@ -1004,7 +1007,7 @@ function drawProjectionFrame(targetCtx, now) {
   // Shapes are the projected content; draw them first, then the visual-mode
   // layer (falling particles in 'physics', or the facade eyes in 'eyes').
   drawShapes(targetCtx, app, false, now);
-  drawPhysicsEffects(targetCtx, app.effects, now, false);
+  drawPhysicsEffects(targetCtx, app.effects, now, false, null, app.audioLevels);
   renderProjection(targetCtx, allBodies(), {
     visualMode: app.visualMode,
     eyeStyle: app.eyeStyle,
@@ -1485,6 +1488,7 @@ function setTool(tool) {
     colorGate: 'Drag a line; crossing particles change color',
     boostGate: 'Drag a line; crossing particles launch forward',
     portal: 'Drag from entrance to exit',
+    ripplePoint: 'Click to add an audio-reactive ripple point; drag an existing point to move it',
     emitter: `Drag an emitter direction for ${app.particleKind}s`,
     'spawn-orb': 'Click the workspace to drop an orb',
     'spawn-cube': 'Click the workspace to drop a cube',
@@ -2537,6 +2541,7 @@ function physicsLabel(selectionType, item) {
     colorGate: 'Color Gate',
     boostGate: 'Boost Gate',
     portal: 'Portal Pair',
+    ripplePoint: 'Ripple Point',
   }[item.type] || 'Physics Object';
 }
 
@@ -2736,6 +2741,7 @@ function layerIcon(selectionType, item) {
     return 'SQR';
   }
   if (selectionType === 'emitter') return 'EM';
+  if (item.type === 'ripplePoint') return 'RIP';
   return {
     attractor: 'GRV',
     repulsor: 'REP',
@@ -2841,6 +2847,47 @@ function updateObjectControls(selected) {
   lock.classList.toggle('active', item.locked);
 }
 
+function selectedRipplePoint() {
+  if (app.selectedPhysics?.type !== 'effect') return null;
+  const item = app.effects.find((effect) => effect.id === app.selectedPhysics.id);
+  return item?.type === 'ripplePoint' ? item : null;
+}
+
+function updateRipplePointControls(point) {
+  const settings = audioSettings(point?.audio);
+  const enabled = document.getElementById('ripple-point-enabled');
+  if (enabled) {
+    enabled.textContent = settings.enabled ? 'Audio Reactive On' : 'Audio Reactive Off';
+    enabled.classList.toggle('active', settings.enabled);
+  }
+  const band = document.getElementById('ripple-point-band');
+  if (band) band.value = settings.band;
+  const values = {
+    amplifier: [`${Number(settings.amplifier).toFixed(2)}X`, settings.amplifier],
+    threshold: [`${Math.round(settings.threshold * 100)}%`, settings.threshold],
+    rate: [`${Number(settings.rippleRate).toFixed(2)}X`, settings.rippleRate],
+    decay: [`${Math.round(settings.rippleDecay * 100)}%`, settings.rippleDecay],
+  };
+  for (const [key, [label, value]] of Object.entries(values)) {
+    const input = document.getElementById(`ripple-point-${key}`);
+    const output = document.getElementById(`ripple-point-${key}-value`);
+    if (input) input.value = String(value);
+    if (output) output.textContent = label;
+  }
+}
+
+function applyRipplePointSetting(key, value) {
+  const point = selectedRipplePoint();
+  if (!point) return;
+  const settings = audioSettings(point.audio);
+  if (key === 'enabled') settings.enabled = Boolean(value);
+  else if (key === 'band') settings.band = value;
+  else settings[key] = Number(value);
+  point.audio = audioSettings(settings);
+  saveCurrentProject();
+  updateRipplePointControls(point);
+}
+
 function updatePhysicsInspector(selectionType, item) {
   const groups = {
     emitter: document.getElementById('emitter-config'),
@@ -2848,6 +2895,7 @@ function updatePhysicsInspector(selectionType, item) {
     colorGate: document.getElementById('color-gate-config'),
     boostGate: document.getElementById('boost-gate-config'),
     portal: document.getElementById('portal-config'),
+    ripplePoint: document.getElementById('ripple-point-config'),
   };
   Object.values(groups).forEach((group) => { group.hidden = true; });
 
@@ -2871,6 +2919,10 @@ function updatePhysicsInspector(selectionType, item) {
     const spreadDegrees = Math.round((item.spread || 0) * 180 / Math.PI);
     document.getElementById('emitter-spread').value = spreadDegrees;
     document.getElementById('emitter-spread-value').textContent = `${spreadDegrees} deg`;
+  } else if (item.type === 'ripplePoint') {
+    groups.ripplePoint.hidden = false;
+    help.textContent = 'A single point that emits outward audio-reactive ripples.';
+    updateRipplePointControls(item);
   } else if (['attractor', 'repulsor', 'vortex'].includes(item.type)) {
     groups.field.hidden = false;
     help.textContent = item.type === 'attractor'
@@ -2986,6 +3038,30 @@ function updatePropsPanel() {
 }
 
 function wireProps() {
+  document.getElementById('ripple-point-enabled').addEventListener('click', () => {
+    history.checkpoint();
+    const point = selectedRipplePoint();
+    if (!point) return;
+    applyRipplePointSetting('enabled', !audioSettings(point.audio).enabled);
+    commitSceneChange();
+  });
+  document.getElementById('ripple-point-band').addEventListener('change', (event) => {
+    history.checkpoint();
+    applyRipplePointSetting('band', event.target.value);
+    commitSceneChange();
+  });
+  for (const [id, key] of [
+    ['ripple-point-amplifier', 'amplifier'],
+    ['ripple-point-threshold', 'threshold'],
+    ['ripple-point-rate', 'rippleRate'],
+    ['ripple-point-decay', 'rippleDecay'],
+  ]) {
+    const input = document.getElementById(id);
+    input.addEventListener('input', (event) => {
+      applyRipplePointSetting(key, event.target.value);
+    });
+    input.addEventListener('change', commitSceneChange);
+  }
   document.querySelectorAll('[data-surface-order]').forEach(button => {
     button.addEventListener('click', () => {
       const shape = app.getSelectedShape();
@@ -3562,6 +3638,7 @@ function availableCommands() {
     { name: 'Place Emitter', detail: 'Launch configurable particle pulses', group: 'Physics', run: () => setTool('emitter') },
     { name: 'Place Gravity Well', detail: 'Pull particles toward a point', group: 'Physics', run: () => setTool('attractor') },
     { name: 'Place Vortex', detail: 'Create a rotating particle field', group: 'Physics', run: () => setTool('vortex') },
+    { name: 'Place Ripple Point', detail: 'Add a single audio-reactive ripple source', group: 'Motion', run: () => setTool('ripplePoint') },
     { name: 'Draw Color Gate', detail: 'Recolor selected particle types', group: 'Logic', run: () => setTool('colorGate') },
     { name: 'Draw Boost Gate', detail: 'Launch selected particle types', group: 'Logic', run: () => setTool('boostGate') },
     { name: 'Draw Portal Pair', detail: 'Teleport particles between two points', group: 'Logic', run: () => setTool('portal') },

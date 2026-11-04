@@ -3694,6 +3694,7 @@
           <button data-tool="spawn-cube" title="Place a tumbling cube">Cube</button>
           <button data-tool="spawn-shard" title="Place a triangular shard">Shard</button>
           <button data-tool="emitter" title="Place a directed emitter using the last particle type">Emitter</button>
+          <button data-tool="ripplePoint" class="wide" title="Place a single audio-reactive ripple point">Ripple Point</button>
         </div>
       </section>
 
@@ -3866,6 +3867,24 @@
             <label for="portal-radius">Portal size <output id="portal-radius-value">30 px</output></label>
             <input id="portal-radius" type="range" min="20" max="70" step="2" value="30" />
           </div>
+        </section>
+
+        <section class="physics-config-group" id="ripple-point-config">
+          <button id="ripple-point-enabled">Audio Reactive On</button>
+          <div class="props-label">Audio band</div>
+          <select id="ripple-point-band" aria-label="Ripple point audio band">
+            <option value="overall">Overall energy</option>
+            <option value="bass">Bass</option>
+            <option value="mids">Mids</option>
+            <option value="treble">Treble</option>
+          </select>
+          <div class="props-label">Amplifier <span class="props-help">Boosts the audio signal</span></div>
+          <div class="props-row range-row"><input type="range" id="ripple-point-amplifier" min="0.25" max="4" step="0.25" value="1" /><output class="range-value" id="ripple-point-amplifier-value">1.00X</output></div>
+          <div class="props-label">Threshold <span class="props-help">Ignores quiet sound</span></div>
+          <div class="props-row range-row"><input type="range" id="ripple-point-threshold" min="0" max="0.8" step="0.05" value="0.03" /><output class="range-value" id="ripple-point-threshold-value">3%</output></div>
+          <div class="props-label">Rate / Decay</div>
+          <div class="props-row range-row"><input type="range" id="ripple-point-rate" min="0.25" max="3" step="0.25" value="1" /><output class="range-value" id="ripple-point-rate-value">1.00X</output></div>
+          <div class="props-row range-row"><input type="range" id="ripple-point-decay" min="0.2" max="0.98" step="0.02" value="0.72" /><output class="range-value" id="ripple-point-decay-value">72%</output></div>
         </section>
 
         <button id="physics-delete">Delete Physics Object</button>

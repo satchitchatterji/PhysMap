@@ -102,6 +102,9 @@ Grab the latest build from the [**Releases**](https://github.com/mirauta-alexand
   then enable per-surface bass, mids, treble, or overall-energy response. Existing
   animations brighten and accelerate while clipped ripples radiate from a draggable
   point on the surface.
+- **Ripple Point objects** &mdash; place a standalone audio-reactive point anywhere on
+  the stage. Select it to edit its audio band, amplifier, threshold, rate, and decay;
+  choose Ripple Point again and drag an existing point to move it.
 - **Project hub** &mdash; animated startup, autosaved current project, and a library
   of named projects you can reopen any time.
 - **Undo / Redo** with a deep history, and **Export / Import** scenes as `.json`.

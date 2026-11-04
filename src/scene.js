@@ -52,7 +52,7 @@ export function serialize(app) {
   }));
 
   const effects = (app.effects || []).map((effect) => {
-    const { id, ...data } = effect;
+    const { id, _audioRippleSignal, _audioRippleBursts, ...data } = effect;
     return data;
   });
 

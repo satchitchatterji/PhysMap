@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { drawShapes, makeShape } from '../src/shapes.js';
+import { drawPhysicsEffects, effectDefaults } from '../src/physicsEffects.js';
 
 test('image fills use the image even when a video is also assigned', () => {
   const image = { complete: true }, video = { readyState: 4 };
@@ -35,4 +36,15 @@ test('audio-reactive ripples clip to the selected shape only', () => {
   drawShapes(ctx, { shapes: [shape], audioLevels: { overall: 1 } }, false, 200);
   assert.ok(clips >= 1);
   assert.ok(ellipses > 0);
+});
+
+test('standalone ripple points emit outward audio bursts', () => {
+  const point = { ...effectDefaults('ripplePoint', { x: 20, y: 20 }), id: 1 };
+  let arcs = 0;
+  const ctx = {
+    save() {}, restore() {}, beginPath() {}, arc() { arcs++; }, stroke() {}, fill() {},
+  };
+  drawPhysicsEffects(ctx, [point], 100, false, null, { overall: 1 });
+  drawPhysicsEffects(ctx, [point], 200, false, null, { overall: 1 });
+  assert.ok(arcs >= 2);
 });

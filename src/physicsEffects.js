@@ -1,5 +1,6 @@
 import Matter from 'matter-js';
 import { config } from './config.js';
+import { audioSettings, normalizeSignal } from './audioReactive.js';
 
 const { Body } = Matter;
 
@@ -10,6 +11,7 @@ const EFFECT_COLORS = {
   colorGate: '#63f5c5',
   boostGate: '#ffd65a',
   portal: '#62d8ff',
+  ripplePoint: '#b4e89c',
 };
 
 function particles(bodies) {
@@ -338,7 +340,50 @@ function drawPortal(ctx, effect, now, editMode, selected) {
   ctx.restore();
 }
 
-export function drawPhysicsEffects(ctx, effects, now, editMode = false, selectedEffectId = null) {
+function drawRipplePoint(ctx, effect, now, editMode, selected, audioLevels) {
+  const settings = audioSettings(effect.audio);
+  const signal = normalizeSignal(audioLevels?.[settings.band] || 0, {
+    ...settings,
+    sensitivity: settings.sensitivity * settings.amplifier,
+  });
+  const previousSignal = effect._audioRippleSignal || 0;
+  effect._audioRippleSignal = signal;
+  if (!Array.isArray(effect._audioRippleBursts)) effect._audioRippleBursts = [];
+  const lastBurst = effect._audioRippleBursts[effect._audioRippleBursts.length - 1];
+  const rising = signal > 0.08 && signal > previousSignal + 0.012;
+  if (signal > 0.08 && (rising || !lastBurst || now - lastBurst.at > 260)) {
+    effect._audioRippleBursts.push({ at: now, strength: signal });
+  }
+
+  const color = effect.color || EFFECT_COLORS.ripplePoint;
+  const duration = (450 + settings.rippleDecay * 1450) / Math.max(0.25, settings.rippleRate);
+  effect._audioRippleBursts = effect._audioRippleBursts.filter((burst) => now - burst.at < duration);
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = selected ? 26 : 16;
+  ctx.lineWidth = selected ? 3 : 2;
+  for (const burst of effect._audioRippleBursts) {
+    const age = Math.max(0, now - burst.at) / duration;
+    for (let ring = 0; ring < 3; ring++) {
+      const progress = age - ring * 0.18;
+      if (progress <= 0 || progress >= 1) continue;
+      ctx.globalAlpha = burst.strength * (1 - progress) * 0.82;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, Math.max(2, progress * 170), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = editMode ? 1 : 0.9;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(effect.x, effect.y, selected ? 8 : 6, 0, Math.PI * 2);
+  ctx.fill();
+  if (editMode) drawLabel(ctx, 'RIPPLE POINT', effect.x, effect.y - 24, color);
+  ctx.restore();
+}
+
+export function drawPhysicsEffects(ctx, effects, now, editMode = false, selectedEffectId = null, audioLevels = null) {
   for (const effect of effects || []) {
     if (effect.visible === false) continue;
     const selected = editMode && effect.id === selectedEffectId;
@@ -348,11 +393,22 @@ export function drawPhysicsEffects(ctx, effects, now, editMode = false, selected
       drawGate(ctx, effect, now, editMode, selected);
     } else if (effect.type === 'portal') {
       drawPortal(ctx, effect, now, editMode, selected);
+    } else if (effect.type === 'ripplePoint') {
+      drawRipplePoint(ctx, effect, now, editMode, selected, audioLevels);
     }
   }
 }
 
 export function effectDefaults(type, data) {
+  if (type === 'ripplePoint') {
+    return {
+      type,
+      x: data.x,
+      y: data.y,
+      color: EFFECT_COLORS.ripplePoint,
+      audio: { enabled: true, band: 'overall', sensitivity: 1, amplifier: 1, smoothing: 0.35, threshold: 0.03, rippleRate: 1, rippleDecay: 0.72 },
+    };
+  }
   if (['attractor', 'repulsor', 'vortex'].includes(type)) {
     return {
       type,

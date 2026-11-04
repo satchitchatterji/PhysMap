@@ -218,3 +218,12 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   context menus. Both use the shared layer-order helper, preserve undo checkpoints,
   and leave physics-object context menus unchanged.
 - Intended commit: `Add send-to-back shape context action`
+
+## Standalone ripple point objects
+
+- Added a Ripple Point creation tool and command-palette action. Points are saved as
+  scene effects, appear in Layers and context menus, can be dragged with the tool,
+  and expose independent audio band/amplifier/threshold/rate/decay controls.
+- Ripple Point bursts use the same outward-only audio behavior as reactive surfaces;
+  runtime burst state is excluded from scene serialization.
+- Intended commit: `Add standalone audio-reactive ripple points`
