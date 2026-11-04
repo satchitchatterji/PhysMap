@@ -2650,6 +2650,7 @@ function openObjectContextMenu(selectionType, item, event) {
   document.getElementById('shape-context-title').textContent = sceneObjectName(selectionType, item);
   document.getElementById('shape-context-lock').textContent = item.locked ? 'Unlock Object' : 'Lock Object';
   document.getElementById('object-context-front').hidden = selectionType !== 'shape';
+  document.getElementById('object-context-back').hidden = selectionType !== 'shape';
   menu.classList.add('open');
 
   const margin = 10;
@@ -2662,19 +2663,21 @@ function openObjectContextMenu(selectionType, item, event) {
   menu.querySelector('button')?.focus();
 }
 
-function bringSelectedShapeToFront() {
+function reorderSelectedShape(action) {
   const shape = app.getSelectedShape();
   if (!shape) return;
   const index = app.shapes.findIndex((item) => item.id === shape.id);
-  if (index < 0 || index === app.shapes.length - 1) {
-    flash('Shape is already in front');
+  const atBoundary = action === 'front'
+    ? index < 0 || index === app.shapes.length - 1
+    : index < 0 || index === 0;
+  if (atBoundary) {
+    flash(action === 'front' ? 'Shape is already in front' : 'Shape is already at the back');
     return;
   }
   history.checkpoint();
-  app.shapes.splice(index, 1);
-  app.shapes.push(shape);
+  reorderShape(app.shapes, shape.id, action);
   commitSceneChange();
-  flash('Shape brought to front');
+  flash(action === 'front' ? 'Shape brought to front' : 'Shape sent to back');
 }
 
 function wireShapeContextMenu() {
@@ -2695,7 +2698,9 @@ function wireShapeContextMenu() {
     } else if (action === 'duplicate') {
       duplicateSelected();
     } else if (action === 'front') {
-      bringSelectedShapeToFront();
+      reorderSelectedShape('front');
+    } else if (action === 'back') {
+      reorderSelectedShape('back');
     } else if (action === 'lock') {
       history.checkpoint();
       item.locked = !item.locked;

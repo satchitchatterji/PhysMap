@@ -211,3 +211,10 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   back inward. Added a per-surface Amplifier control to boost the analyzed signal
   before sensitivity and threshold processing.
 - Intended commit: `Make audio ripples expand outward and add amplifier control`
+
+## Context-menu layer ordering
+
+- Added `Send to Back` alongside the existing `Bring to Front` action for shape
+  context menus. Both use the shared layer-order helper, preserve undo checkpoints,
+  and leave physics-object context menus unchanged.
+- Intended commit: `Add send-to-back shape context action`
