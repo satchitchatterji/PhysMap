@@ -2342,6 +2342,7 @@ function updateAudioControls(shape) {
   if (toggle) {
     toggle.classList.toggle('active', settings.enabled);
     toggle.textContent = settings.enabled ? 'Audio Reactive On' : 'Audio Reactive Off';
+    toggle.setAttribute('aria-pressed', String(settings.enabled));
   }
   const band = document.getElementById('props-audio-band');
   if (band) band.value = settings.band;
@@ -2864,6 +2865,7 @@ function updateRipplePointControls(point) {
   if (enabled) {
     enabled.textContent = settings.enabled ? 'Audio Reactive On' : 'Audio Reactive Off';
     enabled.classList.toggle('active', settings.enabled);
+    enabled.setAttribute('aria-pressed', String(settings.enabled));
   }
   const band = document.getElementById('ripple-point-band');
   if (band) band.value = settings.band;
@@ -3055,9 +3057,9 @@ function updatePropsPanel() {
 
 function wireProps() {
   document.getElementById('ripple-point-enabled').addEventListener('click', () => {
-    history.checkpoint();
     const point = selectedRipplePoint();
     if (!point) return;
+    history.checkpoint();
     applyRipplePointSetting('enabled', !audioSettings(point.audio).enabled);
     commitSceneChange();
   });
@@ -3248,8 +3250,10 @@ function wireProps() {
   wireAnimationRange('props-anim-intensity', applyAnimIntensity);
 
   document.getElementById('props-audio-enabled').addEventListener('click', () => {
+    const shape = app.getSelectedShape();
+    if (!shape) return;
     history.checkpoint();
-    applyAudioSetting('enabled', !audioSettings(app.getSelectedShape()?.audio).enabled);
+    applyAudioSetting('enabled', !audioSettings(shape.audio).enabled);
     commitSceneChange();
   });
   document.getElementById('props-audio-band').addEventListener('change', (event) => {

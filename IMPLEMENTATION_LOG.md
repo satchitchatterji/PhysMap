@@ -250,3 +250,16 @@ not claimed as completed by automated tests or the synthetic-frame browser check
   The selected color applies to both the point marker and emitted waves; mapped
   surfaces continue to use their existing surface color control.
 - Intended commit: `Add color controls for ripple points`
+
+## Audio-reactive inspector toggle reliability
+
+- Made the surface and standalone Ripple Point audio toggles explicit non-submit
+  buttons with accessible `aria-pressed` state. Toggle handlers now verify the
+  selected object before creating an undo checkpoint and update the pressed state
+  whenever inspector controls refresh, preventing a stale-looking side control.
+- Verification: `npm test` (31 passed), `npm run build` (passed), and `git diff
+  --check` (passed). A live browser check confirmed the surface control changes
+  from `Audio Reactive Off` to `Audio Reactive On` for a selected surface.
+- Electron hardware permission and packaged-app checks remain platform-dependent
+  and were not rerun for this UI-only fix.
+- Intended commit: `Fix audio-reactive inspector toggle state`
